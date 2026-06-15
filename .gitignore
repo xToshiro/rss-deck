@@ -1,0 +1,23 @@
+# Virtual Environment
+.venv/
+venv/
+ENV/
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Databases
+rss_deck.db
+test_rss_deck.db
+
+# IDE Caches & Local Configurations
+.idea/
+.vscode/
+.env
+.env.*
+*.log
+*.sqlite

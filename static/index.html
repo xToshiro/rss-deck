@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RSS Deck - Dashboard de Feeds em Tempo Real</title>
+  <!-- Google Fonts for Modern Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Dashboard Controls -->
+    <header class="app-sidebar">
+      <div class="brand">
+        <svg class="brand-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 11a9 9 0 0 1 9 9"></path>
+          <path d="M4 4a16 16 0 0 1 16 16"></path>
+          <circle cx="5" cy="19" r="1"></circle>
+        </svg>
+        <h1>RSS Deck</h1>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="tab-navigation" id="tab-navigation">
+        <!-- Populated dynamically via JS -->
+      </nav>
+
+      <!-- Live and Operations Status -->
+      <div class="sidebar-section">
+        <h3>Controles do Feed</h3>
+        
+        <!-- Live status / Manual Refresh -->
+        <div class="control-row">
+          <div class="status-badge live" id="live-indicator">
+            <span class="pulse-dot"></span>
+            <span id="status-text">Tempo Real</span>
+          </div>
+          <button id="refresh-btn" class="action-btn" title="Atualizar feeds agora">
+            <svg class="spin-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="control-row" style="margin-top: 0.75rem;">
+          <button id="manage-feeds-btn" class="secondary-btn" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 0; padding: 0.6rem;">
+            <svg style="width: 1rem; height: 1rem;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            Gerenciar Feeds
+          </button>
+        </div>
+      </div>
+
+      <!-- Tags Pulsantes -->
+      <div class="sidebar-section">
+        <h3>Tags Pulsantes</h3>
+        <div class="search-box" style="margin-bottom:0.75rem;">
+          <input type="text" id="tag-input" placeholder="Adicionar tag..." autocomplete="off">
+          <button id="add-tag-btn" class="clear-btn" style="color: var(--color-success); font-weight: bold; right: 0.5rem; font-size: 1.1rem;">+</button>
+        </div>
+        <div class="tags-list-container" id="tags-list">
+          <!-- Chips go here -->
+        </div>
+      </div>
+
+      <!-- Search Filters -->
+      <div class="sidebar-section">
+        <h3>Filtrar Notícias</h3>
+        <div class="search-box">
+          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="search-input" placeholder="Buscar no histórico..." autocomplete="off">
+          <button id="clear-search-btn" class="clear-btn" style="display:none;">&times;</button>
+        </div>
+      </div>
+
+      <!-- Time Travel (Histórico) -->
+      <div class="sidebar-section">
+        <h3>Viagem no Tempo</h3>
+        <div class="time-travel-card">
+          <label for="date-picker" class="time-label">Navegar por Data</label>
+          <div class="date-input-wrapper">
+            <input type="date" id="date-picker" class="custom-date-input">
+          </div>
+          <button id="reset-time-btn" class="secondary-btn" style="display:none;">
+            Voltar para o Presente
+          </button>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <p>RSS Deck &copy; 2026</p>
+        <span class="db-size-info" id="db-info">Conectado</span>
+      </div>
+    </header>
+
+    <!-- Main Deck Scrollable Column Workspace -->
+    <main class="deck-workspace" id="deck-workspace">
+      <!-- Dynamic columns will be rendered here by JS -->
+      <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner"></div>
+        <p>Carregando colunas do RSS...</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- Audio Alert for incoming news (subtle pop) -->
+  <audio id="notification-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-120.wav" preload="auto"></audio>
+
+  <!-- Modal: Feed Manager -->
+  <div id="feed-manager-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Gerenciador de Feeds</h2>
+        <button id="close-modal-btn" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- Left column: Add category & feed forms -->
+        <div class="modal-form-section">
+          <div class="card-section">
+            <h3>Criar Nova Categoria</h3>
+            <form id="add-category-form" class="modal-form">
+              <input type="text" id="new-category-name" placeholder="Ex: Ciência, Esportes..." required autocomplete="off">
+              <button type="submit" class="primary-btn">Criar Categoria</button>
+            </form>
+          </div>
+
+          <div class="card-section" style="margin-top: 1.5rem;">
+            <h3>Cadastrar Novo Feed</h3>
+            <form id="add-feed-form" class="modal-form">
+              <div class="form-group">
+                <label for="new-feed-name">Nome do Feed</label>
+                <input type="text" id="new-feed-name" placeholder="Ex: G1 Ciência" required autocomplete="off">
+              </div>
+              <div class="form-group">
+                <label for="new-feed-url">URL do RSS</label>
+                <input type="url" id="new-feed-url" placeholder="https://exemplo.com/rss" required autocomplete="off">
+              </div>
+              <div class="form-group">
+                <label for="new-feed-category">Categoria</label>
+                <select id="new-feed-category" required>
+                  <!-- Categories list option values -->
+                </select>
+              </div>
+              <button type="submit" class="primary-btn">Cadastrar Feed</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Right column: List and manage feeds -->
+        <div class="modal-list-section">
+          <h3>Feeds e Categorias Ativos</h3>
+          <div id="feed-manager-list" class="manager-list">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
