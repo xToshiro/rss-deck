@@ -288,25 +288,42 @@ def calculate_default_update_interval(feed_id):
     return max(1, min(1440, avg_interval))
 
 def fetch_all_feeds():
-    """Queries all configured feeds, fetches latest articles, and updates database."""
+    """Queries all configured feeds, fetches latest articles concurrently, and updates database."""
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT id, name, url FROM feeds")
-    feeds = cursor.fetchall()
+    feeds = [dict(row) for row in cursor.fetchall()]
+    conn.close()
     
-    now_str = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
-    total_new = 0
-    for feed in feeds:
-        feed_id, name, url = feed['id'], feed['name'], feed['url']
-        print(f"Polling feed: {name} ({url})")
+    import concurrent.futures
+    
+    def fetch_single(feed):
+        fid = feed['id']
+        name = feed['name']
+        url = feed['url']
+        print(f"Concurrent polling feed: {name} ({url})")
         entries = fetch_feed_entries(url)
+        return fid, name, url, entries
+
+    total_new = 0
+    now_str = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+    
+    # Run fetchers in parallel (up to 10 threads)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        results = list(executor.map(fetch_single, feeds))
+        
+    # Process results sequentially to write to SQLite (avoid DB lock issues)
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    for fid, name, url, entries in results:
         if entries:
-            new_inserted = save_parsed_entries(feed_id, entries, url)
+            new_inserted = save_parsed_entries(fid, entries, url)
             total_new += new_inserted
             print(f"Inserted {new_inserted} new articles for {name}")
-        cursor.execute("UPDATE feeds SET last_fetched = ? WHERE id = ?", (now_str, feed_id))
+        cursor.execute("UPDATE feeds SET last_fetched = ? WHERE id = ?", (now_str, fid))
     conn.commit()
     conn.close()
+    
     return total_new
 
 def poll_due_feeds():
@@ -860,6 +877,21 @@ if __name__ == '__main__':
     # Initialize DB & Feeds
     init_db()
     add_default_feeds()
+    
+    # Save icon.ico to local workspace if it doesn't exist
+    icon_path = "app_icon.ico"
+    if not os.path.exists(icon_path):
+        try:
+            from PIL import Image, ImageDraw
+            image = Image.new('RGB', (64, 64), color=(15, 22, 36))
+            dc = ImageDraw.Draw(image)
+            dc.ellipse([8, 8, 56, 56], outline=(59, 130, 246), width=5)
+            dc.ellipse([20, 20, 44, 44], outline=(245, 158, 11), width=4)
+            dc.ellipse([28, 28, 36, 36], fill=(16, 185, 129))
+            image.save(icon_path, format="ICO", sizes=[(64, 64), (32, 32), (16, 16)])
+            print("Generated app_icon.ico on boot.")
+        except Exception as e:
+            print(f"Could not save app_icon.ico: {e}")
     
     # Start polling thread
     start_background_polling()

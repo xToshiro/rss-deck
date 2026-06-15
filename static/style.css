@@ -707,19 +707,23 @@ body {
   animation: textPulseRed 1.4s infinite ease-in-out;
 }
 .article-card.pulsing-alert.color-red {
-  border-color: rgba(239, 68, 68, 0.6) !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
   background: rgba(239, 68, 68, 0.04) !important;
-  animation: cardAlertGlowRed 1.8s infinite ease-in-out;
+  animation: cardAlertGlowRed 2s infinite ease-in-out;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.08);
+}
+.article-card.pulsing-alert.color-red:hover {
+  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.2), 0 4px 10px rgba(0,0,0,0.3);
 }
 @keyframes textPulseRed {
   0% { transform: scale(1); }
-  50% { transform: scale(1.05); text-shadow: 0 0 4px rgba(239, 68, 68, 0.6); }
+  50% { transform: scale(1.03); opacity: 0.95; }
   100% { transform: scale(1); }
 }
 @keyframes cardAlertGlowRed {
-  0% { box-shadow: 0 0 5px rgba(239, 68, 68, 0.1); }
-  50% { box-shadow: 0 0 16px rgba(239, 68, 68, 0.3); border-color: rgba(239, 68, 68, 0.9) !important; }
-  100% { box-shadow: 0 0 5px rgba(239, 68, 68, 0.1); }
+  0% { border-color: rgba(239, 68, 68, 0.3) !important; }
+  50% { border-color: rgba(239, 68, 68, 0.9) !important; }
+  100% { border-color: rgba(239, 68, 68, 0.3) !important; }
 }
 
 /* Green tag & alert */
@@ -730,19 +734,23 @@ body {
   animation: textPulseGreen 1.4s infinite ease-in-out;
 }
 .article-card.pulsing-alert.color-green {
-  border-color: rgba(16, 185, 129, 0.6) !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
   background: rgba(16, 185, 129, 0.04) !important;
-  animation: cardAlertGlowGreen 1.8s infinite ease-in-out;
+  animation: cardAlertGlowGreen 2s infinite ease-in-out;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);
+}
+.article-card.pulsing-alert.color-green:hover {
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.2), 0 4px 10px rgba(0,0,0,0.3);
 }
 @keyframes textPulseGreen {
   0% { transform: scale(1); }
-  50% { transform: scale(1.05); text-shadow: 0 0 4px rgba(16, 185, 129, 0.6); }
+  50% { transform: scale(1.03); opacity: 0.95; }
   100% { transform: scale(1); }
 }
 @keyframes cardAlertGlowGreen {
-  0% { box-shadow: 0 0 5px rgba(16, 185, 129, 0.1); }
-  50% { box-shadow: 0 0 16px rgba(16, 185, 129, 0.3); border-color: rgba(16, 185, 129, 0.9) !important; }
-  100% { box-shadow: 0 0 5px rgba(16, 185, 129, 0.1); }
+  0% { border-color: rgba(16, 185, 129, 0.3) !important; }
+  50% { border-color: rgba(16, 185, 129, 0.9) !important; }
+  100% { border-color: rgba(16, 185, 129, 0.3) !important; }
 }
 
 /* Blue tag & alert */
@@ -753,19 +761,23 @@ body {
   animation: textPulseBlue 1.4s infinite ease-in-out;
 }
 .article-card.pulsing-alert.color-blue {
-  border-color: rgba(59, 130, 246, 0.6) !important;
+  border-color: rgba(59, 130, 246, 0.4) !important;
   background: rgba(59, 130, 246, 0.04) !important;
-  animation: cardAlertGlowBlue 1.8s infinite ease-in-out;
+  animation: cardAlertGlowBlue 2s infinite ease-in-out;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
+}
+.article-card.pulsing-alert.color-blue:hover {
+  box-shadow: 0 6px 18px rgba(59, 130, 246, 0.2), 0 4px 10px rgba(0,0,0,0.3);
 }
 @keyframes textPulseBlue {
   0% { transform: scale(1); }
-  50% { transform: scale(1.05); text-shadow: 0 0 4px rgba(59, 130, 246, 0.6); }
+  50% { transform: scale(1.03); opacity: 0.95; }
   100% { transform: scale(1); }
 }
 @keyframes cardAlertGlowBlue {
-  0% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.1); }
-  50% { box-shadow: 0 0 16px rgba(59, 130, 246, 0.3); border-color: rgba(59, 130, 246, 0.9) !important; }
-  100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.1); }
+  0% { border-color: rgba(59, 130, 246, 0.3) !important; }
+  50% { border-color: rgba(59, 130, 246, 0.9) !important; }
+  100% { border-color: rgba(59, 130, 246, 0.3) !important; }
 }
 
 /* Purple tag & alert */
@@ -776,19 +788,23 @@ body {
   animation: textPulsePurple 1.4s infinite ease-in-out;
 }
 .article-card.pulsing-alert.color-purple {
-  border-color: rgba(139, 92, 246, 0.6) !important;
+  border-color: rgba(139, 92, 246, 0.4) !important;
   background: rgba(139, 92, 246, 0.04) !important;
-  animation: cardAlertGlowPurple 1.8s infinite ease-in-out;
+  animation: cardAlertGlowPurple 2s infinite ease-in-out;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.08);
+}
+.article-card.pulsing-alert.color-purple:hover {
+  box-shadow: 0 6px 18px rgba(139, 92, 246, 0.2), 0 4px 10px rgba(0,0,0,0.3);
 }
 @keyframes textPulsePurple {
   0% { transform: scale(1); }
-  50% { transform: scale(1.05); text-shadow: 0 0 4px rgba(139, 92, 246, 0.6); }
+  50% { transform: scale(1.03); opacity: 0.95; }
   100% { transform: scale(1); }
 }
 @keyframes cardAlertGlowPurple {
-  0% { box-shadow: 0 0 5px rgba(139, 92, 246, 0.1); }
-  50% { box-shadow: 0 0 16px rgba(139, 92, 246, 0.3); border-color: rgba(139, 92, 246, 0.9) !important; }
-  100% { box-shadow: 0 0 5px rgba(139, 92, 246, 0.1); }
+  0% { border-color: rgba(139, 92, 246, 0.3) !important; }
+  50% { border-color: rgba(139, 92, 246, 0.9) !important; }
+  100% { border-color: rgba(139, 92, 246, 0.3) !important; }
 }
 
 /* Orange tag & alert */
@@ -799,19 +815,23 @@ body {
   animation: textPulseOrange 1.4s infinite ease-in-out;
 }
 .article-card.pulsing-alert.color-orange {
-  border-color: rgba(245, 158, 11, 0.6) !important;
+  border-color: rgba(245, 158, 11, 0.4) !important;
   background: rgba(245, 158, 11, 0.04) !important;
-  animation: cardAlertGlowOrange 1.8s infinite ease-in-out;
+  animation: cardAlertGlowOrange 2s infinite ease-in-out;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.08);
+}
+.article-card.pulsing-alert.color-orange:hover {
+  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.2), 0 4px 10px rgba(0,0,0,0.3);
 }
 @keyframes textPulseOrange {
   0% { transform: scale(1); }
-  50% { transform: scale(1.05); text-shadow: 0 0 4px rgba(245, 158, 11, 0.6); }
+  50% { transform: scale(1.03); opacity: 0.95; }
   100% { transform: scale(1); }
 }
 @keyframes cardAlertGlowOrange {
-  0% { box-shadow: 0 0 5px rgba(245, 158, 11, 0.1); }
-  50% { box-shadow: 0 0 16px rgba(245, 158, 11, 0.3); border-color: rgba(245, 158, 11, 0.9) !important; }
-  100% { box-shadow: 0 0 5px rgba(245, 158, 11, 0.1); }
+  0% { border-color: rgba(245, 158, 11, 0.3) !important; }
+  50% { border-color: rgba(245, 158, 11, 0.9) !important; }
+  100% { border-color: rgba(245, 158, 11, 0.3) !important; }
 }
 
 /* Tag manager chips list design */

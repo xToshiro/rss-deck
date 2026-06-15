@@ -220,6 +220,11 @@ class RSSDeckInstaller:
             shutil.copy2(os.path.join(source, "README.md"), os.path.join(dest, "README.md"))
             shutil.copy2(os.path.join(source, "dashboard.png"), os.path.join(dest, "dashboard.png"))
             shutil.copy2(os.path.join(source, "requirements.txt"), os.path.join(dest, "requirements.txt"))
+            
+            # Copy app icon if it exists
+            icon_src = os.path.join(source, "app_icon.ico")
+            if os.path.exists(icon_src):
+                shutil.copy2(icon_src, os.path.join(dest, "app_icon.ico"))
 
             # Copy Static folder recursively
             static_dest = os.path.join(dest, "static")
@@ -295,20 +300,23 @@ class RSSDeckInstaller:
             pythonw_path = "pythonw.exe"  # Fallback to PATH resolution
 
         app_py_path = os.path.join(install_dir, "app.py")
+        app_icon_path = os.path.join(install_dir, "app_icon.ico")
         
         # Clean path variables for PowerShell single/double quote injection safety
         app_py_path_clean = os.path.normpath(app_py_path)
         pythonw_path_clean = os.path.normpath(pythonw_path)
         install_dir_clean = os.path.normpath(install_dir)
         shortcut_path_clean = os.path.normpath(shortcut_path)
+        app_icon_path_clean = os.path.normpath(app_icon_path)
 
-        # PowerShell automation script to create COM WScript.Shell shortcut
+        # PowerShell automation script to create COM WScript.Shell shortcut with icon
         ps_script = f"""
         $Shell = New-Object -ComObject WScript.Shell
         $Shortcut = $Shell.CreateShortcut("{shortcut_path_clean}")
         $Shortcut.TargetPath = "{pythonw_path_clean}"
         $Shortcut.Arguments = '"{app_py_path_clean}"'
         $Shortcut.WorkingDirectory = "{install_dir_clean}"
+        $Shortcut.IconLocation = "{app_icon_path_clean}"
         $Shortcut.Save()
         """
         
