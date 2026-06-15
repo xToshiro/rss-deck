@@ -847,10 +847,6 @@ function renderFeedManagerList() {
     feedManagerList.appendChild(groupDiv);
   });
 }
-    
-    feedManagerList.appendChild(groupDiv);
-  });
-}
 
 // Delete feed handler
 async function handleDeleteFeed(id) {

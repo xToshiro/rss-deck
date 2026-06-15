@@ -21,3 +21,8 @@ test_rss_deck.db
 .env.*
 *.log
 *.sqlite
+
+# PyInstaller builds
+build/
+dist/
+*.spec
