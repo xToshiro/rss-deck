@@ -19,13 +19,18 @@ O **RSS Deck** é uma dashboard de notícias em tempo real inspirada no design c
 
 - **🗂️ Categorias Dinâmicas e Customizadas**: Alterne facilmente entre abas organizadas (Ex: *Brasil, Mundo, Economia, Tecnologia, Guerras*) e crie novas categorias direto na interface.
 - **🛠️ Gerenciador de Feeds RSS (CRUD)**: Cadastre novos feeds RSS em segundos, edite nomes/URLs, apague canais antigos ou alterne-os de categorias. O sistema executa uma varredura (*crawl*) automática e instantânea de novos feeds cadastrados.
+- **⏱️ Intervalos de Atualização Individuais**: Defina o tempo de checagem (em minutos) individualmente para cada feed RSS. O sistema autocalcula um tempo padrão inicial baseado na frequência média real de publicação de notícias do canal.
 - **🔄 Reordenação por Arrastar e Soltar (Drag & Drop)**: Organize visualmente suas colunas de feeds em tempo real arrastando-as de um lado para o outro. A nova ordem é salva e persistida automaticamente no banco de dados.
-- **🚨 Tag Manager (Alertas Pulsantes)**: Cadastre palavras-chave e tags de monitoramento. Quando um termo cadastrado surge em uma notícia, o título ganha destaque neon vermelho pulsante e o card inteiro emite um brilho pulsante.
+- **📊 Estatísticas & Média de Publicação**: Visualize a frequência média real de publicação de notícias e o intervalo de polling configurado no topo de cada coluna.
+- **🔵 Contagem de Tags por Coluna**: Cada feed exibe no cabeçalho pequenos badges circulares coloridos indicando a quantidade de notícias contendo palavras-chave das suas tags ativas naquele feed.
+- **🚨 Tag Manager (Alertas Pulsantes)**: Cadastre palavras-chave e tags de monitoramento. Quando um termo cadastrado surge em uma notícia, o título ganha destaque neon e o card inteiro emite um brilho pulsante na cor da tag.
+- **⚡ Atualização Direcionada por Coluna**: Botões de recarregamento individuais nos cabeçalhos disparam a varredura específica com uma animação futurista de scan laser azul exclusiva na coluna que está sendo atualizada.
+- **🚀 Detector de Atualizações**: O sistema monitora lançamentos no GitHub e exibe um banner de notificação instantâneo caso haja uma nova versão disponível para download.
 - **⏳ Viagem no Tempo (Time-Travel)**: Filtre o feed de notícias por data (dia específico no histórico) e faça buscas por palavra-chave instantâneas.
 - **🧹 Filtros e Higienização Inteligente (UOL & Gerais)**: Impede a inserção de lixo, links duplicados ou cartões vazios (como placeholders comuns de notícias vazias do UOL). Garante que todos os cards tenham títulos e resumos reais.
 - **⚡ Animações e Micro-Interações Premium**:
   - Efeito hover magnético e inclinável nos cards com reflexo de brilho varrendo a superfície (*shine sweep*).
-  - Animação futurista de scan laser azul cobrindo a tela durante as atualizações manuais do feed.
+  - Animação futurista de scan laser azul cobrindo especificamente a coluna que está sendo atualizada (ou todas sob refresh geral).
   - Carregamento de colunas com efeito cascata (*staggered animations*).
 
 ---
