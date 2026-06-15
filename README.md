@@ -40,30 +40,30 @@ O banco SQLite local (`rss_deck.db`) utiliza uma estrutura relacional normalizad
 ```mermaid
 erDiagram
     categories {
-        id INTEGER PK
-        name TEXT UNIQUE
-        display_order INTEGER
+        INTEGER id PK
+        TEXT name "UNIQUE"
+        INTEGER display_order
     }
     feeds {
-        id INTEGER PK
-        name TEXT
-        url TEXT UNIQUE
-        category TEXT
-        column_index INTEGER
+        INTEGER id PK
+        TEXT name
+        TEXT url "UNIQUE"
+        TEXT category
+        INTEGER column_index
     }
     articles {
-        id INTEGER PK
-        feed_id INTEGER FK
-        guid TEXT UNIQUE
-        title TEXT
-        description TEXT
-        link TEXT
-        pub_date TEXT
-        fetched_date TEXT
+        INTEGER id PK
+        INTEGER feed_id FK
+        TEXT guid "UNIQUE"
+        TEXT title
+        TEXT description
+        TEXT link
+        TEXT pub_date
+        TEXT fetched_date
     }
     tags {
-        id INTEGER PK
-        word TEXT UNIQUE
+        INTEGER id PK
+        TEXT word "UNIQUE"
     }
     
     feeds }|--|| categories : "organizado em"
