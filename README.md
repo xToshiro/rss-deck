@@ -1,4 +1,4 @@
-# 📡 RSS Deck — Dashboard de Feeds em Tempo Real
+# RSS Deck — Real-Time RSS/Atom Feed Dashboard
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python&logoColor=white" alt="Python Badge">
@@ -11,40 +11,62 @@
   <img src="dashboard.png" alt="RSS Deck Dashboard Preview" width="100%" style="border-radius: 12px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); margin: 20px 0;">
 </p>
 
-O **RSS Deck** é uma dashboard de notícias em tempo real inspirada no design clássico do *TweetDeck*. Ele permite acompanhar múltiplos canais de notícias (feeds RSS/Atom) de forma síncrona através de colunas verticais roláveis, organizadas em abas de categorias dinâmicas. O aplicativo conta com cache local SQLite persistente para busca histórica de notícias, alertas visuais neon e reordenação de colunas por arrastar e soltar (drag-and-drop).
+---
+
+## Language / Idioma
+- [English](#english)
+- [Português](#português)
 
 ---
 
-## ✨ Principais Funcionalidades
+# English
 
-- **🗂️ Categorias Dinâmicas e Customizadas**: Alterne facilmente entre abas organizadas (Ex: *Brasil, Mundo, Economia, Tecnologia, Guerras*) e crie novas categorias direto na interface.
-- **🛠️ Gerenciador de Feeds RSS (CRUD)**: Cadastre novos feeds RSS em segundos, edite nomes/URLs, apague canais antigos ou alterne-os de categorias. O sistema executa uma varredura (*crawl*) automática e instantânea de novos feeds cadastrados.
-- **⏱️ Intervalos de Atualização Individuais**: Defina o tempo de checagem (em minutos) individualmente para cada feed RSS. O sistema autocalcula um tempo padrão inicial baseado na frequência média real de publicação de notícias do canal.
-- **🔄 Reordenação por Arrastar e Soltar (Drag & Drop)**: Organize visualmente suas colunas de feeds em tempo real arrastando-as de um lado para o outro. A nova ordem é salva e persistida automaticamente no banco de dados.
-- **📊 Estatísticas & Média de Publicação**: Visualize a frequência média real de publicação de notícias e o intervalo de polling configurado no topo de cada coluna.
-- **🔵 Contagem de Tags por Coluna**: Cada feed exibe no cabeçalho pequenos badges circulares coloridos indicando a quantidade de notícias contendo palavras-chave das suas tags ativas naquele feed.
-- **🚨 Tag Manager (Alertas Pulsantes)**: Cadastre palavras-chave e tags de monitoramento. Quando um termo cadastrado surge em uma notícia, o título ganha destaque neon e o card inteiro emite um brilho pulsante na cor da tag.
-- **⚡ Atualização Direcionada por Coluna**: Botões de recarregamento individuais nos cabeçalhos disparam a varredura específica com uma animação futurista de scan laser azul exclusiva na coluna que está sendo atualizada.
-- **🚀 Detector de Atualizações**: O sistema monitora lançamentos no GitHub e exibe um banner de notificação instantâneo caso haja uma nova versão disponível para download.
-- **⏳ Viagem no Tempo (Time-Travel)**: Filtre o feed de notícias por data (dia específico no histórico) e faça buscas por palavra-chave instantâneas.
-- **🧹 Filtros e Higienização Inteligente (UOL & Gerais)**: Impede a inserção de lixo, links duplicados ou cartões vazios (como placeholders comuns de notícias vazias do UOL). Garante que todos os cards tenham títulos e resumos reais.
-- **⚡ Animações e Micro-Interações Premium**:
-  - Efeito hover magnético e inclinável nos cards com reflexo de brilho varrendo a superfície (*shine sweep*).
-  - Animação futurista de scan laser azul cobrindo especificamente a coluna que está sendo atualizada (ou todas sob refresh geral).
-  - Carregamento de colunas com efeito cascata (*staggered animations*).
+**RSS Deck** is a professional real-time news dashboard inspired by the classic multi-column layout of *TweetDeck*. It allows users to aggregate and monitor multiple RSS/Atom feeds concurrently through vertical scrollable columns organized into dynamic category tabs. The application is built using a local persistent SQLite database in Write-Ahead Log (WAL) mode, supporting historical news searches, custom tag highlights, and native Windows System Tray background execution.
 
----
+## Key Features
 
-## 🛠️ Stack Tecnológica
-
-- **Backend**: Python 3, Flask, SQLite3, `feedparser`, `requests`, `urllib3`
-- **Frontend**: HTML5 Semântico, CSS3 (Efeitos Glassmorphism, CSS Variables, Keyframes Avançados), Vanilla JavaScript (Drag and Drop nativo, Fetch API, DOM mutations)
+- **Dynamic Category Tabs**: Easily switch between standard categories (*e.g., Brazil, World, Economy, Technology, Conflict*) or create custom ones directly from the UI.
+- **Feed Manager (CRUD)**: Register, edit, or delete RSS feeds. Bounded dynamically to category tabs with instant automatic crawler processing.
+- **Custom Update Intervals**: Configure polling intervals individually per feed. The system automatically calculates a default baseline interval based on the historical publication frequency of each feed.
+- **Drag & Drop Reordering**: Reorganize feed columns visually using native drag-and-drop. The layout order is automatically saved and persistent in the database.
+- **Header Metadata & Tag Badges**: Shows average publication intervals and polling configurations. Display circular colored reference counters matching active tag keyword alerts.
+- **Tag Manager & Pulse Alerts**: Set keywords with custom colors. When a matched term appears in an article title, it displays a neon keyword badge and triggers a subtle glow warning in the card.
+- **Targeted Column Refresh**: Perform updates on a single feed column with a futuristic scanner animation overlay without triggering a global refresh.
+- **Update Detector**: Automatically queries the GitHub Releases API and displays a top notification banner if a newer desktop version is available.
+- **Time-Travel (Historical Archives)**: Filter articles by a specific publication date and perform instant text searches across archives.
+- **Clean Article Purging**: Sanitizes descriptions (stripping HTML tags) and filters placeholder empty cards (such as empty UOL placeholders) to ensure premium visual consistency.
+- **Optimized UI Animations**: Uses lightweight CSS opacity transformations for alerts and transitions to minimize browser CPU/GPU utilization.
 
 ---
 
-## 📁 Estrutura do Banco de Dados
+# Português
 
-O banco SQLite local (`rss_deck.db`) utiliza uma estrutura relacional normalizada com integridade de chave estrangeira (`ON DELETE CASCADE`):
+O **RSS Deck** é um dashboard profissional de notícias em tempo real inspirado no layout clássico de múltiplas colunas do *TweetDeck*. Ele permite agregar e monitorar múltiplos feeds RSS/Atom simultaneamente através de colunas verticais organizadas em abas de categorias dinâmicas. O aplicativo possui persistência local com banco SQLite rodando no modo Write-Ahead Log (WAL), suportando busca histórica de notícias, destaque de palavras-chave com tags coloridas e execução nativa em segundo plano na bandeja do sistema (System Tray) do Windows.
+
+## Principais Funcionalidades
+
+- **Abas de Categorias Dinâmicas**: Alterne facilmente entre abas organizadas (*ex: Brasil, Mundo, Economia, Tecnologia, Guerras*) ou crie novas categorias diretamente pela interface.
+- **Gerenciador de Feeds (CRUD)**: Cadastre, edite ou exclua canais RSS. Integrado com as abas de categorias e com varredura automática imediata após o cadastro.
+- **Intervalos de Atualização Customizados**: Configure intervalos de checagem individuais por feed. O sistema autocalcula um tempo padrão com base na média real de publicação de notícias do canal.
+- **Reordenação por Arrastar e Soltar (Drag & Drop)**: Reorganize as colunas arrastando-as lateralmente. A ordenação visual é persistida de forma automática no banco de dados.
+- **Metadados e Badges de Tags**: Visualize a média de publicação e tempo de polling no topo das colunas. Badges coloridos circulares informam quantas notícias daquela coluna contêm termos de suas tags ativas.
+- **Alertas de Tags Pulsantes**: Cadastre palavras-chave e atribua cores. Artigos correspondentes recebem destaque neon no título e um contorno brilhante sutil.
+- **Atualização Direcionada por Coluna**: Atualize feeds específicos de forma independente com uma animação futurista de varredura laser na coluna correspondente.
+- **Detector de Novas Releases**: Monitora lançamentos no repositório do GitHub e exibe um banner de aviso se houver atualizações disponíveis para download.
+- **Viagem no Tempo (Histórico)**: Filtre artigos por um dia específico e realize buscas por termos e palavras-chave.
+- **Sanitização Inteligente de Notícias**: Remove tags HTML de descrições e bloqueia placeholders vazios ou notícias de lixo (como links em branco comuns do UOL).
+- **Consumo de Recursos Otimizado**: Utiliza animações de opacidade leves para evitar repaints sucessivos no navegador, minimizando o uso de CPU/GPU.
+
+---
+
+## Tech Stack / Tecnologias
+- **Backend**: Python 3.10+, Flask, SQLite3 (WAL mode), `feedparser`, `requests`, `pystray`, `Pillow`
+- **Frontend**: Semantic HTML5, Vanilla CSS3 (Glassmorphism, CSS variables, keyframe animations), Vanilla JavaScript (Native Drag and Drop, Fetch API, DOM manipulation)
+
+---
+
+## Database Schema / Estrutura do Banco
+The SQLite database (`rss_deck.db`) implements a relational model with foreign key constraints (`ON DELETE CASCADE`):
 
 ```mermaid
 erDiagram
@@ -59,6 +81,8 @@ erDiagram
         TEXT url "UNIQUE"
         TEXT category
         INTEGER column_index
+        INTEGER update_interval
+        TEXT last_fetched
     }
     articles {
         INTEGER id PK
@@ -76,65 +100,60 @@ erDiagram
         TEXT color
     }
     
-    feeds }|--|| categories : "organizado em"
-    articles }|--|| feeds : "pertence a"
+    feeds }|--|| categories : "organized under"
+    articles }|--|| feeds : "belongs to"
 ```
 
 ---
 
-## 🚀 Instalação e Execução
+## Installation & Running / Instalação e Execução
 
-### Opção 1: Instalador Gráfico (Windows - Recomendado)
-O projeto inclui um instalador desktop completo (`installer.py`) feito com `tkinter` em tema escuro personalizado.
+### Option 1: Desktop Graphical Installer (Windows - Recommended) / Opção 1: Instalador Gráfico (Recomendado)
+The installer script packages all dependencies, sets up local directories, and configures the startup shortcut.
 
-1. Execute o instalador:
+1. Execute the installer:
    ```bash
    python installer.py
    ```
-2. O instalador exibirá os termos de licença **GPLv3**. Marque a caixa de aceite e selecione a pasta de instalação (padrão: `AppData/Local/RSSDeck`).
-3. O instalador irá:
-   - Copiar os arquivos necessários para a pasta escolhida.
-   - Instalar dependências silenciosamente via `pip`.
-   - Criar um atalho na sua Área de Trabalho com suporte a execução silenciosa em segundo plano (`pythonw.exe app.py`).
-4. Ao concluir, marque "Iniciar o RSS Deck agora" ou clique no atalho criado. O programa abrirá o navegador local e rodará silenciosamente na **Bandeja do Sistema (System Tray)**.
+2. Read and accept the software license (**GPLv3**) and select the installation directory (Default: `AppData/Local/RSSDeck`).
+3. The installer will:
+   - Create local destination folders.
+   - Install required dependencies silently via `pip`.
+   - Setup a desktop shortcut linking to `pythonw.exe app.py` for silent background execution.
+4. Launch the application from the desktop shortcut. It runs in the **System Tray** and opens the browser interface.
 
-### Opção 2: Execução Manual
-Se preferir rodar manualmente sem instalar:
+---
 
-1. Instale as dependências listadas no `requirements.txt`:
+### Option 2: Manual Run / Opção 2: Execução Manual
+1. Install dependencies from `requirements.txt`:
    ```bash
    pip install -r requirements.txt
    ```
-2. Inicialize o servidor Flask e o ícone de bandeja:
+2. Run the server and system tray icon:
    ```bash
    python app.py
    ```
-   *Nota: O script abrirá a dashboard no navegador padrão (`http://127.0.0.1:5000/`) e rodará na System Tray.*
+   *Note: This starts the local server at `http://127.0.0.1:5000/` and launches the tray interface.*
 
 ---
 
-## ⚙️ Bandeja do Sistema & Instância Única
+## System Tray & Single Instance / Bandeja do Sistema e Instância Única
 
-- **Modo Tray**: O aplicativo roda em segundo plano e exibe um ícone personalizado com anéis concêntricos na bandeja do sistema do Windows.
-- **Menu da Tray**: Clique com o botão direito no ícone para acessar:
-  - **Abrir RSS Deck**: Abre a dashboard no seu navegador padrão.
-  - **Sair**: Fecha completamente o servidor de feeds e remove o ícone da bandeja.
-- **Instância Única (Single Instance Check)**: Se você clicar no atalho da área de trabalho enquanto o servidor já estiver ativo em segundo plano, o programa detectará o serviço na porta 5000, apenas abrirá a página no seu navegador e encerrará o processo redundante para não duplicar consumo de memória.
+- **Tray Control**: The backend runs in the background. Right-click the tray icon to access:
+  - **Open RSS Deck**: Launches the dashboard in the default browser.
+  - **Exit**: Terminates the Flask server and background pollers.
+- **Single Instance Guard**: Clicking the desktop shortcut while the backend is already running will not spawn duplicate processes. The program will detect the active port, open the dashboard in the browser, and terminate the redundant launcher immediately.
 
 ---
 
-## 🧪 Rodando os Testes
+## Running Tests / Executando os Testes
 
-Para validar a suíte integrada de testes unitários e rotas da API, execute:
+To run the automated suite of unit and integration tests:
 ```bash
-pytest
+pytest test_app.py
 ```
-A suíte valida:
-- Integridade do esquema SQLite e sementes iniciais.
-- Standardização de data/hora (RFC 822/ISO 8601).
-- Rotas REST de feeds (criação, edição inline, exclusão, reordenação).
-- Regras de filtros gerais e purga de placeholders legados.
-
----
-
-Desenvolvido com carinho por **Jairo Ivo** e design premium. 📡
+The test suite validates:
+- SQLite schema structure and cascade deletions.
+- Publish date standardization (RFC 822/ISO 8601).
+- REST API CRUD and column reordering handlers.
+- Cleaning rules for article titles/descriptions and empty placeholder exclusion.
