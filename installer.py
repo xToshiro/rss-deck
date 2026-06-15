@@ -236,13 +236,26 @@ class RSSDeckInstaller:
             self.update_progress(50, "Instalando dependências via pip (isso pode levar alguns instantes)...")
             self.root.update()
             
-            # Run pip silently using current Python interpreter environment
-            pip_cmd = [sys.executable, "-m", "pip", "install", "-r", "requirements.txt"]
             # Hide console window on Windows
             startupinfo = subprocess.STARTUPINFO()
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
             startupinfo.wShowWindow = subprocess.SW_HIDE
 
+            # Determine python interpreter safely (sys.executable is installer.exe when frozen)
+            python_exe = sys.executable
+            if getattr(sys, 'frozen', False):
+                python_exe = "python"
+                try:
+                    subprocess.run(["python", "--version"], startupinfo=startupinfo, capture_output=True)
+                except Exception:
+                    try:
+                        subprocess.run(["py", "--version"], startupinfo=startupinfo, capture_output=True)
+                        python_exe = "py"
+                    except Exception:
+                        pass
+
+            # Run pip silently using appropriate Python environment
+            pip_cmd = [python_exe, "-m", "pip", "install", "-r", "requirements.txt"]
             proc = subprocess.run(pip_cmd, cwd=dest, startupinfo=startupinfo, capture_output=True)
             if proc.returncode != 0:
                 print(f"Pip warning/error code {proc.returncode}: {proc.stderr.decode('utf-8', errors='ignore')}")
