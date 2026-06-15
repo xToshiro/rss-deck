@@ -2,3 +2,5 @@ flask
 feedparser
 requests
 pytest
+pystray
+Pillow

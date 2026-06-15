@@ -671,34 +671,144 @@ body {
   font-weight: 500;
 }
 
+/* Color Dot Selector Styles */
+.color-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: var(--transition-smooth);
+}
+.color-dot:hover {
+  transform: scale(1.2);
+}
+.color-dot.active {
+  border-color: #ffffff;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+}
+
 /* Pulsing Alerts for Highlight Tags */
 .pulsing-keyword {
-  color: #ef4444; /* Neon Red */
-  background-color: rgba(239, 68, 68, 0.15);
   padding: 1px 6px;
   border-radius: 4px;
   font-weight: 700;
-  border: 1px dashed rgba(239, 68, 68, 0.5);
   display: inline-block;
-  animation: textPulse 1.4s infinite ease-in-out;
 }
 
-@keyframes textPulse {
+/* Red tag & alert */
+.pulsing-keyword.color-red {
+  color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.15);
+  border: 1px dashed rgba(239, 68, 68, 0.5);
+  animation: textPulseRed 1.4s infinite ease-in-out;
+}
+.article-card.pulsing-alert.color-red {
+  border-color: rgba(239, 68, 68, 0.6) !important;
+  background: rgba(239, 68, 68, 0.04) !important;
+  animation: cardAlertGlowRed 1.8s infinite ease-in-out;
+}
+@keyframes textPulseRed {
   0% { transform: scale(1); }
   50% { transform: scale(1.05); text-shadow: 0 0 4px rgba(239, 68, 68, 0.6); }
   100% { transform: scale(1); }
 }
-
-.article-card.pulsing-alert {
-  border-color: rgba(239, 68, 68, 0.6) !important;
-  background: rgba(239, 68, 68, 0.04) !important;
-  animation: cardAlertGlow 1.8s infinite ease-in-out;
-}
-
-@keyframes cardAlertGlow {
+@keyframes cardAlertGlowRed {
   0% { box-shadow: 0 0 5px rgba(239, 68, 68, 0.1); }
   50% { box-shadow: 0 0 16px rgba(239, 68, 68, 0.3); border-color: rgba(239, 68, 68, 0.9) !important; }
   100% { box-shadow: 0 0 5px rgba(239, 68, 68, 0.1); }
+}
+
+/* Green tag & alert */
+.pulsing-keyword.color-green {
+  color: #10b981;
+  background-color: rgba(16, 185, 129, 0.15);
+  border: 1px dashed rgba(16, 185, 129, 0.5);
+  animation: textPulseGreen 1.4s infinite ease-in-out;
+}
+.article-card.pulsing-alert.color-green {
+  border-color: rgba(16, 185, 129, 0.6) !important;
+  background: rgba(16, 185, 129, 0.04) !important;
+  animation: cardAlertGlowGreen 1.8s infinite ease-in-out;
+}
+@keyframes textPulseGreen {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); text-shadow: 0 0 4px rgba(16, 185, 129, 0.6); }
+  100% { transform: scale(1); }
+}
+@keyframes cardAlertGlowGreen {
+  0% { box-shadow: 0 0 5px rgba(16, 185, 129, 0.1); }
+  50% { box-shadow: 0 0 16px rgba(16, 185, 129, 0.3); border-color: rgba(16, 185, 129, 0.9) !important; }
+  100% { box-shadow: 0 0 5px rgba(16, 185, 129, 0.1); }
+}
+
+/* Blue tag & alert */
+.pulsing-keyword.color-blue {
+  color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.15);
+  border: 1px dashed rgba(59, 130, 246, 0.5);
+  animation: textPulseBlue 1.4s infinite ease-in-out;
+}
+.article-card.pulsing-alert.color-blue {
+  border-color: rgba(59, 130, 246, 0.6) !important;
+  background: rgba(59, 130, 246, 0.04) !important;
+  animation: cardAlertGlowBlue 1.8s infinite ease-in-out;
+}
+@keyframes textPulseBlue {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); text-shadow: 0 0 4px rgba(59, 130, 246, 0.6); }
+  100% { transform: scale(1); }
+}
+@keyframes cardAlertGlowBlue {
+  0% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.1); }
+  50% { box-shadow: 0 0 16px rgba(59, 130, 246, 0.3); border-color: rgba(59, 130, 246, 0.9) !important; }
+  100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.1); }
+}
+
+/* Purple tag & alert */
+.pulsing-keyword.color-purple {
+  color: #8b5cf6;
+  background-color: rgba(139, 92, 246, 0.15);
+  border: 1px dashed rgba(139, 92, 246, 0.5);
+  animation: textPulsePurple 1.4s infinite ease-in-out;
+}
+.article-card.pulsing-alert.color-purple {
+  border-color: rgba(139, 92, 246, 0.6) !important;
+  background: rgba(139, 92, 246, 0.04) !important;
+  animation: cardAlertGlowPurple 1.8s infinite ease-in-out;
+}
+@keyframes textPulsePurple {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); text-shadow: 0 0 4px rgba(139, 92, 246, 0.6); }
+  100% { transform: scale(1); }
+}
+@keyframes cardAlertGlowPurple {
+  0% { box-shadow: 0 0 5px rgba(139, 92, 246, 0.1); }
+  50% { box-shadow: 0 0 16px rgba(139, 92, 246, 0.3); border-color: rgba(139, 92, 246, 0.9) !important; }
+  100% { box-shadow: 0 0 5px rgba(139, 92, 246, 0.1); }
+}
+
+/* Orange tag & alert */
+.pulsing-keyword.color-orange {
+  color: #f59e0b;
+  background-color: rgba(245, 158, 11, 0.15);
+  border: 1px dashed rgba(245, 158, 11, 0.5);
+  animation: textPulseOrange 1.4s infinite ease-in-out;
+}
+.article-card.pulsing-alert.color-orange {
+  border-color: rgba(245, 158, 11, 0.6) !important;
+  background: rgba(245, 158, 11, 0.04) !important;
+  animation: cardAlertGlowOrange 1.8s infinite ease-in-out;
+}
+@keyframes textPulseOrange {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); text-shadow: 0 0 4px rgba(245, 158, 11, 0.6); }
+  100% { transform: scale(1); }
+}
+@keyframes cardAlertGlowOrange {
+  0% { box-shadow: 0 0 5px rgba(245, 158, 11, 0.1); }
+  50% { box-shadow: 0 0 16px rgba(245, 158, 11, 0.3); border-color: rgba(245, 158, 11, 0.9) !important; }
+  100% { box-shadow: 0 0 5px rgba(245, 158, 11, 0.1); }
 }
 
 /* Tag manager chips list design */
@@ -722,7 +832,14 @@ body {
   font-size: 0.8rem;
   color: var(--text-primary);
   font-weight: 500;
+  transition: var(--transition-smooth);
 }
+
+.tag-chip.color-red { border-color: rgba(239, 68, 68, 0.4); background-color: rgba(239, 68, 68, 0.08); }
+.tag-chip.color-green { border-color: rgba(16, 185, 129, 0.4); background-color: rgba(16, 185, 129, 0.08); }
+.tag-chip.color-blue { border-color: rgba(59, 130, 246, 0.4); background-color: rgba(59, 130, 246, 0.08); }
+.tag-chip.color-purple { border-color: rgba(139, 92, 246, 0.4); background-color: rgba(139, 92, 246, 0.08); }
+.tag-chip.color-orange { border-color: rgba(245, 158, 11, 0.4); background-color: rgba(245, 158, 11, 0.08); }
 
 .tag-delete-btn {
   background: transparent;

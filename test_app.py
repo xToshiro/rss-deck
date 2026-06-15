@@ -390,3 +390,106 @@ def test_uol_filter(clean_db):
 
     assert inserted == ["uol-2"]
 
+
+def test_delete_category_cascade(client):
+    """Verify that deleting a category removes feeds and articles inside it."""
+    # 1. Create a category
+    client.post('/api/categories', json={"name": "Esportes"})
+    
+    # 2. Add feed in that category
+    resp_feed = client.post('/api/feeds', json={
+        "name": "GE",
+        "url": "https://ge.globo.com/feed",
+        "category": "Esportes"
+    })
+    feed_id = resp_feed.get_json()["feed"]["id"]
+
+    # 3. Add an article to the feed
+    conn = app.get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO articles (feed_id, guid, title, description, link, pub_date)
+        VALUES (?, 'esporte-1', 'Título Esporte', 'Resumo Esporte', 'http://ge/1', '2026-06-15 10:00:00')
+    """, (feed_id,))
+    conn.commit()
+    
+    # Get category ID
+    cursor.execute("SELECT id FROM categories WHERE name = 'Esportes'")
+    cat_id = cursor.fetchone()[0]
+    conn.close()
+
+    # Verify setup is correct
+    resp_articles = client.get('/api/articles?category=Esportes')
+    assert len(resp_articles.get_json()) == 1
+
+    # 4. Delete the category
+    resp_del = client.delete(f'/api/categories/{cat_id}')
+    assert resp_del.status_code == 200
+    assert resp_del.get_json()["status"] == "success"
+
+    # 5. Verify cascade deletion
+    conn = app.get_db_connection()
+    cursor = conn.cursor()
+    # Feed should be deleted
+    cursor.execute("SELECT COUNT(*) FROM feeds WHERE id = ?", (feed_id,))
+    assert cursor.fetchone()[0] == 0
+    # Article should be deleted
+    cursor.execute("SELECT COUNT(*) FROM articles WHERE guid = 'esporte-1'")
+    assert cursor.fetchone()[0] == 0
+    # Category should be deleted
+    cursor.execute("SELECT COUNT(*) FROM categories WHERE id = ?", (cat_id,))
+    assert cursor.fetchone()[0] == 0
+    conn.close()
+
+
+def test_add_tag_with_color(client):
+    """Verify registering a tag with custom color works."""
+    # Add a green tag
+    response = client.post('/api/tags', json={"word": "Saúde", "color": "green"})
+    assert response.status_code == 201
+    data = response.get_json()
+    assert data["tag"]["word"] == "Saúde"
+    assert data["tag"]["color"] == "green"
+
+    # Get tags list
+    response_list = client.get('/api/tags')
+    tags = response_list.get_json()
+    assert len(tags) == 1
+    assert tags[0]["word"] == "Saúde"
+    assert tags[0]["color"] == "green"
+
+
+def test_articles_global_category(client):
+    """Verify that querying category=Global consolidates articles from all categories."""
+    # Seed feeds and categories
+    client.post('/api/categories', json={"name": "CatA"})
+    client.post('/api/categories', json={"name": "CatB"})
+    
+    resp_feed_a = client.post('/api/feeds', json={"name": "FeedA", "url": "urlA", "category": "CatA"})
+    resp_feed_b = client.post('/api/feeds', json={"name": "FeedB", "url": "urlB", "category": "CatB"})
+    
+    feed_a_id = resp_feed_a.get_json()["feed"]["id"]
+    feed_b_id = resp_feed_b.get_json()["feed"]["id"]
+
+    # Insert articles
+    conn = app.get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO articles (feed_id, guid, title, description, link, pub_date) VALUES (?, 'a1', 'Title A', 'Desc A', 'linkA', '2026-06-15 10:00:00')", (feed_a_id,))
+    cursor.execute("INSERT INTO articles (feed_id, guid, title, description, link, pub_date) VALUES (?, 'b1', 'Title B', 'Desc B', 'linkB', '2026-06-15 11:00:00')", (feed_b_id,))
+    conn.commit()
+    conn.close()
+
+    # Query for CatA only
+    resp_a = client.get('/api/articles?category=CatA')
+    assert len(resp_a.get_json()) == 1
+    assert resp_a.get_json()[0]["guid"] == "a1"
+
+    # Query for Global
+    resp_global = client.get('/api/articles?category=Global')
+    global_articles = resp_global.get_json()
+    assert len(global_articles) == 2
+    # Verify sorted order (newest first)
+    assert global_articles[0]["guid"] == "b1"
+    assert global_articles[1]["guid"] == "a1"
+
+

@@ -7,14 +7,14 @@ RSS Deck is a multi-column dashboard inspired by TweetDeck designed to display r
 
 ## 2. Database Schema (SQLite)
 
-The database file is stored at `./rss_deck.db`.
+The database file is stored at `./rss_deck.db` (or in `%LOCALAPPDATA%/RSSDeck/rss_deck.db` if installed).
 
 ### 2.1 Table: `feeds`
 Stores the source feeds configured in the system.
 * `id`: INTEGER PRIMARY KEY AUTOINCREMENT
 * `name`: TEXT NOT NULL
 * `url`: TEXT NOT NULL UNIQUE
-* `category`: TEXT NOT NULL (Value: 'Brasil' or 'Mundo')
+* `category`: TEXT NOT NULL (Value of any registered category)
 * `column_index`: INTEGER NOT NULL (Visual order of columns inside the tab)
 
 ### 2.2 Table: `articles`
@@ -27,6 +27,18 @@ Stores individual news entries.
 * `link`: TEXT NOT NULL
 * `pub_date`: TEXT NOT NULL (ISO 8601 UTC format: `YYYY-MM-DD HH:MM:SS`)
 * `fetched_date`: TEXT DEFAULT CURRENT_TIMESTAMP (ISO 8601 UTC)
+
+### 2.3 Table: `categories`
+Stores configured feed categories.
+* `id`: INTEGER PRIMARY KEY AUTOINCREMENT
+* `name`: TEXT UNIQUE NOT NULL
+* `display_order`: INTEGER DEFAULT 0
+
+### 2.4 Table: `tags`
+Stores highlight keywords for news items.
+* `id`: INTEGER PRIMARY KEY AUTOINCREMENT
+* `word`: TEXT UNIQUE NOT NULL
+* `color`: TEXT DEFAULT 'red' (Values: 'red', 'green', 'blue', 'purple', 'orange')
 
 ---
 
@@ -45,61 +57,35 @@ Stores individual news entries.
 ### 4.1 GET `/api/feeds`
 * **Response Status**: `200 OK`
 * **Content Type**: `application/json`
-* **Payload**:
-  ```json
-  [
-    {
-      "id": 1,
-      "name": "G1 - Brasil",
-      "url": "https://g1.globo.com/rss/g1/",
-      "category": "Brasil",
-      "column_index": 0
-    }
-  ]
-  ```
+* **Payload**: Array of feed objects with categories.
 
 ### 4.2 GET `/api/articles`
 * **Query Parameters**:
-  * `category` (optional): Filter by 'Brasil' or 'Mundo'.
-  * `date` (optional): Filter by specific date in `YYYY-MM-DD` format (UTC). Used for the "Time Travel" feature. If omitted, returns all articles (or latest N articles).
-  * `search` (optional): Substring search in title or description (case-insensitive).
+  * `category` (optional): Filter by category name (e.g. 'Brasil', 'Mundo'). If value is `'Global'`, returns consolidated list of all feeds.
+  * `date` (optional): Filter by specific date in `YYYY-MM-DD` format (UTC).
+  * `search` (optional): Substring search in title or description.
 * **Response Status**: `200 OK`
-* **Content Type**: `application/json`
-* **Payload**:
-  ```json
-  [
-    {
-      "id": 42,
-      "feed_id": 1,
-      "feed_name": "G1 - Brasil",
-      "category": "Brasil",
-      "guid": "http://g1.globo.com/post/123",
-      "title": "Exemplo de Notícia",
-      "description": "Uma breve descrição da notícia...",
-      "link": "https://g1.globo.com/exemplo",
-      "pub_date": "2026-06-15 10:30:00"
-    }
-  ]
-  ```
 
 ### 4.3 POST `/api/fetch`
-* **Action**: Manually triggers immediate fetching of all configured feeds.
+* **Action**: Triggers immediate poll of all configured feeds.
 * **Response Status**: `200 OK`
-* **Content Type**: `application/json`
-* **Payload**:
-  ```json
-  {
-    "status": "success",
-    "new_articles_count": 14
-  }
-  ```
+
+### 4.4 GET and POST `/api/categories`
+* **GET**: Returns array of categories with name and display_order.
+* **POST**: Creates a new category. Returns category details.
+* **DELETE `/api/categories/<id>`**: Deletes the category and cascades deletion to feeds and articles in that category.
+
+### 4.5 GET, POST, and DELETE `/api/tags`
+* **GET**: Returns registered highlight tags with `color`.
+* **POST**: Registers a new tag word with a selected color (`red`, `green`, `blue`, `purple`, `orange`).
+* **DELETE `/api/tags/<id>`**: Deletes a tag keyword.
 
 ---
 
 ## 5. Background Polling Service
 * A background thread starts automatically with the server.
-* Every **10 minutes**, the worker iterates through all URLs in the `feeds` table, fetches their RSS feeds, parses entries, and inserts new articles into the `articles` table.
-* Errors in parsing individual feeds must not crash the worker. They should be logged and skipped.
+* Every **1 minute**, the worker polls all feeds, parses entries, and inserts new ones.
+* Errors in parsing do not crash the worker.
 
 ---
 
@@ -107,16 +93,31 @@ Stores individual news entries.
 
 ### 6.1 Layout & Navigation
 * **Sidebar / Header**:
-  * Tab buttons for switching between "Brasil" and "Mundo".
-  * Time-Travel controls: Date selector to filter news of a specific day, a "Live Feed" button to toggle time-travel off and return to the real-time stream.
-  * Search bar: Type keywords to filter articles across all columns.
-  * Refresh button: Triggers manual fetch with visual spin/loading state.
+  * Tab navigation starting with a virtual "Global" category tab, followed by all dynamically loaded categories.
+  * Developer mention credit in the footer: "Desenvolvido por Jairo Ivo".
+  * Time-Travel date picker and keyword search bar.
+  * Tag manager: contains keyword text input and a circle `.color-dot` selector for assigning colors (Red, Green, Blue, Purple, Orange) to tags.
 * **Columns Layout**:
-  * Side-by-side vertical columns matching feeds in the active category.
-  * Smooth horizontal scroll container if columns exceed screen width.
-  * Vertical scrollbars inside individual columns.
+  * Side-by-side vertical columns corresponding to the active category.
+  * In "Global" category, all feeds from all categories are displayed side-by-side. Column dragging is disabled in this mode.
 
-### 6.2 Feed Cards
-* Displays title, source indicator tag, publication time (formatted as "X minutes ago" or "HH:MM"), description snippet, and a "Read More" link opening in a new tab.
-* Cards transition smoothly on hover.
-* A subtle beep/notification ring or visual dot indicator highlights new incoming articles when in "Live" mode.
+### 6.2 Feed Cards and Keyword Highlights
+* Displays title, relative date/time, description snippet, and "Read More" link.
+* Words in titles matching registered tags are highlighted in their corresponding group color.
+* If a card has one or more matching tags, its entire border pulses with a neon shadow in that tag's specific color (Glow Red, Glow Green, Glow Blue, Glow Purple, Glow Orange).
+
+---
+
+## 7. Windows Installer and System Tray Integration
+
+### 7.1 Desktop Installer (`installer.py`)
+* Built with `tkinter` styled in custom premium dark mode.
+* Displays GPLv3 `LICENSE` text inside a scrollable textbox.
+* Requires user acceptance of license terms via checkbox before installing.
+* Prompts for installation directory (default: `%USERPROFILE%\AppData\Local\RSSDeck`).
+* Copies files, runs pip silently for dependencies, and generates a Desktop shortcut.
+
+### 7.2 Background Execution & System Tray
+* Shortcut executes the app using `pythonw.exe app.py` (silent background execution).
+* Checks for a running instance on boot (focusses/opens browser and exits if already running).
+* Puts an icon on the Windows System Tray with options to "Abrir RSS Deck" (launch browser) and "Sair" (full termination).

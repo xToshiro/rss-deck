@@ -104,6 +104,14 @@ function setupEventListeners() {
     }
   });
 
+  // Color Dot Selection
+  document.querySelectorAll('.tag-color-picker .color-dot').forEach(dot => {
+    dot.addEventListener('click', (e) => {
+      document.querySelectorAll('.tag-color-picker .color-dot').forEach(d => d.classList.remove('active'));
+      e.target.classList.add('active');
+    });
+  });
+
   // Feed Manager modal listeners
   manageFeedsBtn.addEventListener('click', openFeedManagerModal);
   closeModalBtn.addEventListener('click', closeFeedManagerModal);
@@ -182,7 +190,7 @@ function renderTagsList() {
   
   tagsList.forEach(tag => {
     const chip = document.createElement('span');
-    chip.className = 'tag-chip';
+    chip.className = `tag-chip color-${tag.color || 'red'}`;
     chip.innerHTML = `
       ${escapeHtml(tag.word)}
       <button class="tag-delete-btn" data-id="${tag.id}">&times;</button>
@@ -203,11 +211,14 @@ async function addTag() {
   const word = input.value.trim();
   if (!word) return;
   
+  const activeDot = document.querySelector('.tag-color-picker .color-dot.active');
+  const color = activeDot ? activeDot.getAttribute('data-color') : 'red';
+  
   try {
     const response = await fetch('/api/tags', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ word })
+      body: JSON.stringify({ word, color })
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Erro ao adicionar tag");
@@ -237,8 +248,9 @@ async function deleteTag(id) {
 function highlightTitleTags(title) {
   let highlighted = escapeHtml(title);
   let hasMatch = false;
+  let matchColor = 'red';
   
-  if (!tagsList || tagsList.length === 0) return { html: highlighted, hasMatch };
+  if (!tagsList || tagsList.length === 0) return { html: highlighted, hasMatch, color: matchColor };
   
   // Sort tags by length descending to match larger words first
   const sortedTags = [...tagsList].sort((a, b) => b.word.length - a.word.length);
@@ -247,12 +259,15 @@ function highlightTitleTags(title) {
     const escapedWord = escapeRegExp(tag.word);
     const regex = new RegExp(`(${escapedWord})`, 'gi');
     if (regex.test(highlighted)) {
-      highlighted = highlighted.replace(regex, `<span class="pulsing-keyword">$1</span>`);
-      hasMatch = true;
+      highlighted = highlighted.replace(regex, `<span class="pulsing-keyword color-${tag.color || 'red'}">$1</span>`);
+      if (!hasMatch) {
+        hasMatch = true;
+        matchColor = tag.color || 'red';
+      }
     }
   });
   
-  return { html: highlighted, hasMatch };
+  return { html: highlighted, hasMatch, color: matchColor };
 }
 
 // Helper to escape regex special characters
@@ -375,7 +390,7 @@ function prependArticleToColumnDOM(art) {
   const card = document.createElement('article');
   const highlightResult = highlightTitleTags(art.title);
   
-  card.className = `article-card new-item new-arrival${highlightResult.hasMatch ? ' pulsing-alert' : ''}`;
+  card.className = `article-card new-item new-arrival${highlightResult.hasMatch ? ' pulsing-alert color-' + highlightResult.color : ''}`;
   card.addEventListener('click', () => {
     window.open(art.link, '_blank');
   });
@@ -408,7 +423,7 @@ function prependArticleToColumnDOM(art) {
 
 // Refresh article counts inside headers
 function updateItemCounters() {
-  const activeFeeds = feeds.filter(f => f.category === currentCategory);
+  const activeFeeds = currentCategory === 'Global' ? feeds : feeds.filter(f => f.category === currentCategory);
   activeFeeds.forEach(feed => {
     const feedArticles = articles.filter(art => art.feed_id === feed.id);
     const colEl = document.getElementById(`col-${feed.id}`);
@@ -486,7 +501,7 @@ function renderDeckColumns() {
   deckWorkspace.innerHTML = '';
   
   // Filter feeds for active category
-  const activeFeeds = feeds.filter(f => f.category === currentCategory);
+  const activeFeeds = currentCategory === 'Global' ? feeds : feeds.filter(f => f.category === currentCategory);
   
   if (activeFeeds.length === 0) {
     deckWorkspace.innerHTML = `
@@ -510,7 +525,7 @@ function renderDeckColumns() {
     const columnElement = document.createElement('section');
     columnElement.className = 'deck-column';
     columnElement.id = `col-${feed.id}`;
-    columnElement.setAttribute('draggable', 'true');
+    columnElement.setAttribute('draggable', currentCategory !== 'Global' ? 'true' : 'false');
     columnElement.dataset.feedId = feed.id;
     // Stagger slide entry animation
     columnElement.style.animationDelay = `${idx * 0.08}s`;
@@ -548,7 +563,7 @@ function renderDeckColumns() {
         const card = document.createElement('article');
         const highlightResult = highlightTitleTags(art.title);
         
-        card.className = `article-card${art.isBrandNew ? ' new-item' : ''}${highlightResult.hasMatch ? ' pulsing-alert' : ''}`;
+        card.className = `article-card${art.isBrandNew ? ' new-item' : ''}${highlightResult.hasMatch ? ' pulsing-alert color-' + highlightResult.color : ''}`;
         
         // Setup simple card click triggers original article in a new tab
         card.addEventListener('click', () => {
@@ -648,7 +663,20 @@ async function loadCategories() {
 // Render tabs dynamically
 function renderCategoryTabs() {
   tabNavigation.innerHTML = '';
-  if (categories.length === 0) return;
+  
+  // Prepend Global tab
+  const globalBtn = document.createElement('button');
+  globalBtn.className = `tab-btn${currentCategory === 'Global' ? ' active' : ''}`;
+  globalBtn.setAttribute('data-category', 'Global');
+  globalBtn.innerHTML = `
+    <span class="tab-indicator-dot"></span>
+    <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+    Global
+  `;
+  globalBtn.addEventListener('click', () => {
+    switchTab('Global');
+  });
+  tabNavigation.appendChild(globalBtn);
   
   categories.forEach(cat => {
     const name = cat.name;
@@ -753,51 +781,72 @@ async function handleAddFeed(e) {
 function renderFeedManagerList() {
   feedManagerList.innerHTML = '';
   
-  if (feeds.length === 0) {
-    feedManagerList.innerHTML = `<p style="font-size:0.85rem; color:var(--text-muted); text-align:center; padding:1.5rem 0;">Nenhum feed ativo.</p>`;
+  if (categories.length === 0) {
+    feedManagerList.innerHTML = `<p style="font-size:0.85rem; color:var(--text-muted); text-align:center; padding:1.5rem 0;">Nenhuma categoria ou feed ativo.</p>`;
     return;
   }
   
-  // Group feeds
-  const grouped = {};
-  feeds.forEach(f => {
-    if (!grouped[f.category]) {
-      grouped[f.category] = [];
-    }
-    grouped[f.category].push(f);
-  });
-  
-  Object.keys(grouped).forEach(catName => {
+  categories.forEach(cat => {
     const groupDiv = document.createElement('div');
     groupDiv.className = 'category-group';
+    groupDiv.style.marginBottom = '1.5rem';
     
     const header = document.createElement('div');
     header.className = 'category-group-header';
-    header.textContent = catName;
+    header.style.display = 'flex';
+    header.style.justifyContent = 'space-between';
+    header.style.alignItems = 'center';
+    header.style.padding = '0.5rem 0';
+    header.style.borderBottom = '1px solid var(--border-color)';
+    header.style.marginBottom = '0.5rem';
+    header.style.fontWeight = 'bold';
+    header.style.color = 'var(--text-primary)';
+    
+    header.innerHTML = `
+      <span>${escapeHtml(cat.name)}</span>
+      <button class="delete-cat-btn" data-id="${cat.id}" style="background:transparent; border:none; color:#ef4444; font-size:0.75rem; cursor:pointer; font-weight:600; padding:2px 6px;">Excluir Categoria</button>
+    `;
+    
+    header.querySelector('.delete-cat-btn').addEventListener('click', () => handleDeleteCategory(cat.id, cat.name));
+    
     groupDiv.appendChild(header);
     
-    grouped[catName].forEach(feed => {
-      const row = document.createElement('div');
-      row.className = 'feed-manager-row';
-      row.id = `mgr-row-${feed.id}`;
-      
-      row.innerHTML = `
-        <div class="feed-info">
-          <span class="feed-row-name">${escapeHtml(feed.name)}</span>
-          <span class="feed-row-url">${escapeHtml(feed.url)}</span>
-        </div>
-        <div class="feed-row-actions">
-          <button class="edit-row-btn" data-id="${feed.id}">Editar</button>
-          <button class="delete-row-btn" data-id="${feed.id}">Excluir</button>
-        </div>
-      `;
-      
-      // Hook buttons
-      row.querySelector('.delete-row-btn').addEventListener('click', () => handleDeleteFeed(feed.id));
-      row.querySelector('.edit-row-btn').addEventListener('click', () => toggleEditFeedRow(feed));
-      
-      groupDiv.appendChild(row);
-    });
+    const catFeeds = feeds.filter(f => f.category === cat.name);
+    
+    if (catFeeds.length === 0) {
+      const emptyMsg = document.createElement('div');
+      emptyMsg.style.fontSize = '0.8rem';
+      emptyMsg.style.color = 'var(--text-muted)';
+      emptyMsg.style.padding = '0.5rem 0 1rem 0';
+      emptyMsg.textContent = 'Sem feeds cadastrados.';
+      groupDiv.appendChild(emptyMsg);
+    } else {
+      catFeeds.forEach(feed => {
+        const row = document.createElement('div');
+        row.className = 'feed-manager-row';
+        row.id = `mgr-row-${feed.id}`;
+        
+        row.innerHTML = `
+          <div class="feed-info">
+            <span class="feed-row-name">${escapeHtml(feed.name)}</span>
+            <span class="feed-row-url">${escapeHtml(feed.url)}</span>
+          </div>
+          <div class="feed-row-actions">
+            <button class="edit-row-btn" data-id="${feed.id}">Editar</button>
+            <button class="delete-row-btn" data-id="${feed.id}">Excluir</button>
+          </div>
+        `;
+        
+        row.querySelector('.delete-row-btn').addEventListener('click', () => handleDeleteFeed(feed.id));
+        row.querySelector('.edit-row-btn').addEventListener('click', () => toggleEditFeedRow(feed));
+        
+        groupDiv.appendChild(row);
+      });
+    }
+    
+    feedManagerList.appendChild(groupDiv);
+  });
+}
     
     feedManagerList.appendChild(groupDiv);
   });
@@ -812,6 +861,29 @@ async function handleDeleteFeed(id) {
     if (!response.ok) throw new Error("Erro ao excluir feed");
     
     await loadFeeds();
+    renderFeedManagerList();
+    await loadDashboard();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+// Delete category handler
+async function handleDeleteCategory(id, name) {
+  if (!confirm(`Tem certeza que deseja excluir a categoria "${name}"? Todos os feeds e notícias dentro dela serão apagados permanentemente!`)) return;
+  
+  try {
+    const response = await fetch(`/api/categories/${id}`, { method: 'DELETE' });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Erro ao excluir categoria");
+    
+    await loadCategories();
+    await loadFeeds();
+    
+    if (currentCategory === name) {
+      currentCategory = 'Global';
+    }
+    
     renderFeedManagerList();
     await loadDashboard();
   } catch (err) {

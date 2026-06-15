@@ -88,10 +88,20 @@ def init_db():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS tags (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            word TEXT UNIQUE NOT NULL
+            word TEXT UNIQUE NOT NULL,
+            color TEXT DEFAULT 'red'
         )
     """)
     
+    # Check if tags table has color column for existing databases
+    cursor.execute("PRAGMA table_info(tags)")
+    cols = [row[1] for row in cursor.fetchall()]
+    if "color" not in cols:
+        try:
+            cursor.execute("ALTER TABLE tags ADD COLUMN color TEXT DEFAULT 'red'")
+        except Exception as e:
+            print(f"Error migrating tags table: {e}")
+            
     # Clean up existing placeholder and empty articles from DB
     placeholders = [
         "notícias - uol", "notícias uol", "uol notícias", "uol", 
@@ -524,12 +534,42 @@ def api_categories():
             conn.close()
             return jsonify({"error": str(e)}), 500
 
+@app.route('/api/categories/<int:cat_id>', methods=['DELETE'])
+def api_delete_category(cat_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Get category name
+        cursor.execute("SELECT name FROM categories WHERE id = ?", (cat_id,))
+        row = cursor.fetchone()
+        if not row:
+            conn.close()
+            return jsonify({"error": "Categoria não encontrada"}), 404
+        cat_name = row['name']
+        
+        # Delete category
+        cursor.execute("DELETE FROM categories WHERE id = ?", (cat_id,))
+        
+        # Delete feeds inside this category (cascades to articles)
+        cursor.execute("DELETE FROM feeds WHERE category = ?", (cat_name,))
+        
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/articles')
 def api_articles():
     category = request.args.get('category')
     date = request.args.get('date')
     search = request.args.get('search')
     
+    # If category is "Global", fetch all categories
+    if category == 'Global':
+        category = None
+        
     try:
         articles = query_articles(category=category, date=date, search=search)
         return jsonify(articles)
@@ -550,7 +590,7 @@ def api_tags():
     cursor = conn.cursor()
     if request.method == 'GET':
         try:
-            cursor.execute("SELECT id, word FROM tags ORDER BY word")
+            cursor.execute("SELECT id, word, color FROM tags ORDER BY word")
             tags = [dict(row) for row in cursor.fetchall()]
             conn.close()
             return jsonify(tags)
@@ -559,17 +599,21 @@ def api_tags():
             return jsonify({"error": str(e)}), 500
             
     elif request.method == 'POST':
-        data = request.get_json()
+        data = request.get_json() or {}
         word = data.get('word', '').strip()
+        color = data.get('color', 'red').strip()
+        if color not in ['red', 'green', 'blue', 'purple', 'orange']:
+            color = 'red'
+            
         if not word:
             conn.close()
             return jsonify({"error": "A palavra-chave não pode ser vazia"}), 400
         try:
-            cursor.execute("INSERT INTO tags (word) VALUES (?)", (word,))
+            cursor.execute("INSERT INTO tags (word, color) VALUES (?, ?)", (word, color))
             conn.commit()
             tag_id = cursor.lastrowid
             conn.close()
-            return jsonify({"status": "success", "tag": {"id": tag_id, "word": word}}), 201
+            return jsonify({"status": "success", "tag": {"id": tag_id, "word": word, "color": color}}), 201
         except sqlite3.IntegrityError:
             conn.close()
             return jsonify({"error": "Esta palavra-chave já está cadastrada"}), 400
@@ -590,14 +634,79 @@ def api_delete_tag(tag_id):
         return jsonify({"error": str(e)}), 500
 
 # Application Boot
+# Application Boot
 if __name__ == '__main__':
+    # 1. Single Instance Check
+    import urllib.request
+    import webbrowser
+    import sys
+    try:
+        req = urllib.request.Request("http://127.0.0.1:5000/", method="GET")
+        with urllib.request.urlopen(req, timeout=1) as response:
+            if response.status == 200:
+                print("RSS Deck já está rodando. Abrindo no navegador...")
+                webbrowser.open("http://127.0.0.1:5000/")
+                sys.exit(0)
+    except Exception:
+        pass
+
     # Initialize DB & Feeds
     init_db()
     add_default_feeds()
     
-    # Start polling thread and run Flask without double-init reloader
+    # Start polling thread
     start_background_polling()
-    app.run(debug=True, use_reloader=False, port=5000)
+    
+    # Start Flask server in a background thread
+    server_thread = threading.Thread(
+        target=lambda: app.run(host='127.0.0.1', port=5000, debug=False, use_reloader=False),
+        daemon=True
+    )
+    server_thread.start()
+    
+    # Wait 2 seconds and open browser automatically on first launch
+    def auto_open_browser():
+        time.sleep(2)
+        try:
+            webbrowser.open("http://127.0.0.1:5000/")
+        except Exception as e:
+            print(f"Failed to open browser automatically: {e}")
+            
+    threading.Thread(target=auto_open_browser, daemon=True).start()
+    
+    # System Tray Icon Support
+    import pystray
+    from PIL import Image, ImageDraw
+
+    def create_tray_icon():
+        # Match premium sidebar color (#0f1624)
+        image = Image.new('RGB', (64, 64), color=(15, 22, 36))
+        dc = ImageDraw.Draw(image)
+        # Blue outer ring, orange inner ring, green center dot representing dynamic feeds connection
+        dc.ellipse([8, 8, 56, 56], outline=(59, 130, 246), width=5)
+        dc.ellipse([20, 20, 44, 44], outline=(245, 158, 11), width=4)
+        dc.ellipse([28, 28, 36, 36], fill=(16, 185, 129))
+        return image
+
+    def on_clicked(icon, item):
+        if str(item) == "Abrir RSS Deck":
+            webbrowser.open("http://127.0.0.1:5000/")
+        elif str(item) == "Sair":
+            icon.stop()
+            os._exit(0)
+
+    icon = pystray.Icon(
+        "rss_deck",
+        create_tray_icon(),
+        title="RSS Deck - Feeds em Tempo Real",
+        menu=pystray.Menu(
+            pystray.MenuItem("Abrir RSS Deck", on_clicked),
+            pystray.MenuItem("Sair", on_clicked)
+        )
+    )
+    
+    print("RSS Deck starting in Tray mode on http://127.0.0.1:5000/ ...")
+    icon.run()
 else:
     # Running under pytest or similar
     init_db()

@@ -7,6 +7,10 @@
   <img src="https://img.shields.io/badge/CSS3-Vanilla-1572B6?style=for-the-badge&logo=css3&logoColor=white" alt="CSS3 Badge">
 </p>
 
+<p align="center">
+  <img src="dashboard.png" alt="RSS Deck Dashboard Preview" width="100%" style="border-radius: 12px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); margin: 20px 0;">
+</p>
+
 O **RSS Deck** é uma dashboard de notícias em tempo real inspirada no design clássico do *TweetDeck*. Ele permite acompanhar múltiplos canais de notícias (feeds RSS/Atom) de forma síncrona através de colunas verticais roláveis, organizadas em abas de categorias dinâmicas. O aplicativo conta com cache local SQLite persistente para busca histórica de notícias, alertas visuais neon e reordenação de colunas por arrastar e soltar (drag-and-drop).
 
 ---
@@ -64,6 +68,7 @@ erDiagram
     tags {
         INTEGER id PK
         TEXT word "UNIQUE"
+        TEXT color
     }
     
     feeds }|--|| categories : "organizado em"
@@ -72,27 +77,44 @@ erDiagram
 
 ---
 
-## 🚀 Como Executar
+## 🚀 Instalação e Execução
 
-### Pré-requisitos
-- Python 3.10 ou superior instalado.
+### Opção 1: Instalador Gráfico (Windows - Recomendado)
+O projeto inclui um instalador desktop completo (`installer.py`) feito com `tkinter` em tema escuro personalizado.
 
-### Passo 1: Instale as Dependências
-Clone o repositório e instale os pacotes necessários:
-```bash
-pip install -r requirements.txt
-```
+1. Execute o instalador:
+   ```bash
+   python installer.py
+   ```
+2. O instalador exibirá os termos de licença **GPLv3**. Marque a caixa de aceite e selecione a pasta de instalação (padrão: `AppData/Local/RSSDeck`).
+3. O instalador irá:
+   - Copiar os arquivos necessários para a pasta escolhida.
+   - Instalar dependências silenciosamente via `pip`.
+   - Criar um atalho na sua Área de Trabalho com suporte a execução silenciosa em segundo plano (`pythonw.exe app.py`).
+4. Ao concluir, marque "Iniciar o RSS Deck agora" ou clique no atalho criado. O programa abrirá o navegador local e rodará silenciosamente na **Bandeja do Sistema (System Tray)**.
 
-### Passo 2: Inicialize o Servidor
-Execute o servidor Flask:
-```bash
-python app.py
-```
-O servidor inicializará o banco de dados `rss_deck.db`, povoará as categorias e feeds padrão se estiver vazio, e abrirá o serviço local.
+### Opção 2: Execução Manual
+Se preferir rodar manualmente sem instalar:
 
-### Passo 3: Acesse no Navegador
-Abra a dashboard no seguinte link:
-[http://127.0.0.1:5000/](http://127.0.0.1:5000/)
+1. Instale as dependências listadas no `requirements.txt`:
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. Inicialize o servidor Flask e o ícone de bandeja:
+   ```bash
+   python app.py
+   ```
+   *Nota: O script abrirá a dashboard no navegador padrão (`http://127.0.0.1:5000/`) e rodará na System Tray.*
+
+---
+
+## ⚙️ Bandeja do Sistema & Instância Única
+
+- **Modo Tray**: O aplicativo roda em segundo plano e exibe um ícone personalizado com anéis concêntricos na bandeja do sistema do Windows.
+- **Menu da Tray**: Clique com o botão direito no ícone para acessar:
+  - **Abrir RSS Deck**: Abre a dashboard no seu navegador padrão.
+  - **Sair**: Fecha completamente o servidor de feeds e remove o ícone da bandeja.
+- **Instância Única (Single Instance Check)**: Se você clicar no atalho da área de trabalho enquanto o servidor já estiver ativo em segundo plano, o programa detectará o serviço na porta 5000, apenas abrirá a página no seu navegador e encerrará o processo redundante para não duplicar consumo de memória.
 
 ---
 
@@ -106,8 +128,8 @@ A suíte valida:
 - Integridade do esquema SQLite e sementes iniciais.
 - Standardização de data/hora (RFC 822/ISO 8601).
 - Rotas REST de feeds (criação, edição inline, exclusão, reordenação).
-- Regras de filtros globais e purga de placeholders legados.
+- Regras de filtros gerais e purga de placeholders legados.
 
 ---
 
-Desenvolvido com carinho e design premium. 📡
+Desenvolvido com carinho por **Jairo Ivo** e design premium. 📡

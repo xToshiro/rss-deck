@@ -58,9 +58,16 @@
       <!-- Tags Pulsantes -->
       <div class="sidebar-section">
         <h3>Tags Pulsantes</h3>
-        <div class="search-box" style="margin-bottom:0.75rem;">
+        <div class="search-box" style="margin-bottom:0.5rem;">
           <input type="text" id="tag-input" placeholder="Adicionar tag..." autocomplete="off">
           <button id="add-tag-btn" class="clear-btn" style="color: var(--color-success); font-weight: bold; right: 0.5rem; font-size: 1.1rem;">+</button>
+        </div>
+        <div class="tag-color-picker" style="display:flex; gap:0.5rem; justify-content:flex-start; margin-bottom:0.75rem; padding: 0 4px;">
+          <span class="color-dot color-red active" data-color="red" title="Vermelho" style="background-color:#ef4444;"></span>
+          <span class="color-dot color-green" data-color="green" title="Verde" style="background-color:#10b981;"></span>
+          <span class="color-dot color-blue" data-color="blue" title="Azul" style="background-color:#3b82f6;"></span>
+          <span class="color-dot color-purple" data-color="purple" title="Roxo" style="background-color:#8b5cf6;"></span>
+          <span class="color-dot color-orange" data-color="orange" title="Laranja" style="background-color:#f59e0b;"></span>
         </div>
         <div class="tags-list-container" id="tags-list">
           <!-- Chips go here -->
@@ -95,7 +102,7 @@
       </div>
 
       <div class="sidebar-footer">
-        <p>RSS Deck &copy; 2026</p>
+        <p>RSS Deck &copy; 2026 | Desenvolvido por <a href="https://github.com/xToshiro" target="_blank" style="color: var(--color-accent-hover); text-decoration: none;">Jairo Ivo</a></p>
         <span class="db-size-info" id="db-info">Conectado</span>
       </div>
     </header>
