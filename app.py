@@ -739,7 +739,7 @@ def api_feed_fetch(feed_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-CURRENT_VERSION = "v1.0.0"
+CURRENT_VERSION = "v1.0.1"
 LATEST_RELEASE_CACHE = {
     "data": None,
     "last_checked": 0
@@ -769,7 +769,15 @@ def api_version_check():
             
     if latest_info:
         latest_tag = latest_info.get("tag_name", CURRENT_VERSION)
-        update_available = (latest_tag != CURRENT_VERSION)
+        
+        def clean_v(v):
+            return [int(x) for x in v.strip().lower().lstrip('v').split('.') if x.isdigit()]
+            
+        try:
+            update_available = clean_v(latest_tag) > clean_v(CURRENT_VERSION)
+        except Exception:
+            update_available = (latest_tag != CURRENT_VERSION)
+            
         return jsonify({
             "current_version": CURRENT_VERSION,
             "latest_version": latest_tag,

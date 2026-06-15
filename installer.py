@@ -277,7 +277,15 @@ class RSSDeckInstaller:
         self.root.update()
 
     def create_desktop_shortcut(self, install_dir):
-        desktop = os.path.join(os.path.expanduser("~"), "Desktop")
+        import winreg
+        try:
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders")
+            desktop, _ = winreg.QueryValueEx(key, "Desktop")
+            winreg.CloseKey(key)
+            desktop = os.path.expandvars(desktop)
+        except Exception:
+            desktop = os.path.join(os.path.expanduser("~"), "Desktop")
+            
         shortcut_path = os.path.join(desktop, "RSS Deck.lnk")
         
         # Get location of pythonw.exe inside current Python environment

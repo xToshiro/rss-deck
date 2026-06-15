@@ -1380,3 +1380,110 @@ body {
   50% { opacity: 0.75; filter: brightness(0.8) saturate(0.8); }
   100% { opacity: 0.95; filter: brightness(0.95) saturate(0.9); }
 }
+
+/* Brand Text and Version Badge */
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.brand-text h1 {
+  margin-bottom: 2px !important;
+}
+.app-version-badge {
+  align-self: flex-start;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-accent-hover);
+  background-color: rgba(59, 130, 246, 0.12);
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  font-family: var(--font-ui);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 1px;
+}
+
+/* Main Content Wrapper and Top Bar */
+.main-content {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-primary);
+}
+
+.top-bar {
+  height: 64px;
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  flex-shrink: 0;
+}
+
+.top-bar-title {
+  display: flex;
+  align-items: center;
+}
+
+.active-tab-title {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.015em;
+  background: linear-gradient(135deg, #fff 40%, var(--color-accent-hover) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.top-bar-controls {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.top-bar-controls .search-box {
+  width: 320px;
+}
+
+.top-bar-controls .search-box input {
+  padding: 0.55rem 0.75rem 0.55rem 2.2rem;
+}
+
+.top-bar-controls .time-travel-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.top-bar-controls .custom-date-input {
+  width: 145px;
+  padding: 0.45rem 0.6rem;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  outline: none;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.top-bar-controls .custom-date-input:focus {
+  border-color: var(--color-accent);
+}
+
+.top-bar-controls .reset-time-btn {
+  margin-top: 0;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}

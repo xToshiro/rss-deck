@@ -131,6 +131,12 @@ function switchTab(category) {
   
   currentCategory = category;
   
+  // Update header tab title in top bar
+  const activeTitle = document.getElementById('active-tab-title');
+  if (activeTitle) {
+    activeTitle.textContent = category;
+  }
+  
   // Toggle visual states
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.toggle('active', btn.getAttribute('data-category') === category);
@@ -1106,6 +1112,13 @@ async function checkForUpdates() {
     const response = await fetch('/api/version/check');
     if (!response.ok) return;
     const data = await response.json();
+    
+    // Update local version label text
+    const versionEl = document.getElementById('app-version');
+    if (versionEl && data.current_version) {
+      versionEl.textContent = data.current_version;
+    }
+    
     if (data.update_available) {
       showUpdateBanner(data.latest_version, data.release_url);
     }

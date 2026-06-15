@@ -104,10 +104,13 @@ Stores highlight keywords for news items.
 
 ### 6.1 Layout & Navigation
 * **Sidebar / Header**:
+  * Brand section showing the logo and the current version badge (`v1.0.1`) inline next to the app name.
   * Tab navigation starting with a virtual "Global" category tab, followed by all dynamically loaded categories.
   * Developer mention credit in the footer: "Desenvolvido por Jairo Ivo".
-  * Time-Travel date picker and keyword search bar.
   * Tag manager: contains keyword text input and a circle `.color-dot` selector for assigning colors (Red, Green, Blue, Purple, Orange) to tags.
+* **Top Header Bar**:
+  * Located above the columns deck workspace, showing the currently active category name.
+  * Incorporates the search box (historical filters) and the date picker (time-travel navigation) to optimize sidebar workspace space.
 * **Columns Layout**:
   * Side-by-side vertical columns corresponding to the active category.
   * In "Global" category, all feeds from all categories are displayed side-by-side. Column dragging is disabled in this mode.
@@ -120,7 +123,7 @@ Stores highlight keywords for news items.
 * If a card has one or more matching tags, its entire border pulses with a neon shadow in that tag's specific color (Glow Red, Glow Green, Glow Blue, Glow Purple, Glow Orange).
 
 ### 6.3 Update Notification Banner
-* On startup, the frontend requests `/api/version/check`. If a new version is available, a warning banner is shown at the top of the UI with a download link.
+* On startup, the frontend requests `/api/version/check`. If a newer version is available (verified by semantic comparison helper `x.y.z > a.b.c`), a warning banner is shown at the top of the UI with a download link.
 
 ---
 
@@ -131,7 +134,8 @@ Stores highlight keywords for news items.
 * Displays GPLv3 `LICENSE` text inside a scrollable textbox.
 * Requires user acceptance of license terms via checkbox before installing.
 * Prompts for installation directory (default: `%USERPROFILE%\AppData\Local\RSSDeck`).
-* Copies files, runs pip silently for dependencies, and generates a Desktop shortcut.
+* Copies files, runs pip silently for dependencies using Python path dynamically resolved.
+* Generates a Desktop shortcut resolving Windows Registry custom paths (including OneDrive redirections).
 
 ### 7.2 Background Execution & System Tray
 * Shortcut executes the app using `pythonw.exe app.py` (silent background execution).

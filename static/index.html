@@ -20,7 +20,10 @@
           <path d="M4 4a16 16 0 0 1 16 16"></path>
           <circle cx="5" cy="19" r="1"></circle>
         </svg>
-        <h1>RSS Deck</h1>
+        <div class="brand-text">
+          <h1>RSS Deck</h1>
+          <span class="app-version-badge" id="app-version">v1.0.1</span>
+        </div>
       </div>
 
       <!-- Navigation Tabs -->
@@ -74,47 +77,47 @@
         </div>
       </div>
 
-      <!-- Search Filters -->
-      <div class="sidebar-section">
-        <h3>Filtrar Notícias</h3>
-        <div class="search-box">
-          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-          <input type="text" id="search-input" placeholder="Buscar no histórico..." autocomplete="off">
-          <button id="clear-search-btn" class="clear-btn" style="display:none;">&times;</button>
-        </div>
-      </div>
-
-      <!-- Time Travel (Histórico) -->
-      <div class="sidebar-section">
-        <h3>Viagem no Tempo</h3>
-        <div class="time-travel-card">
-          <label for="date-picker" class="time-label">Navegar por Data</label>
-          <div class="date-input-wrapper">
-            <input type="date" id="date-picker" class="custom-date-input">
-          </div>
-          <button id="reset-time-btn" class="secondary-btn" style="display:none;">
-            Voltar para o Presente
-          </button>
-        </div>
-      </div>
-
       <div class="sidebar-footer">
         <p>RSS Deck &copy; 2026 | Desenvolvido por <a href="https://github.com/xToshiro" target="_blank" style="color: var(--color-accent-hover); text-decoration: none;">Jairo Ivo</a></p>
         <span class="db-size-info" id="db-info">Conectado</span>
       </div>
     </header>
 
-    <!-- Main Deck Scrollable Column Workspace -->
-    <main class="deck-workspace" id="deck-workspace">
-      <!-- Dynamic columns will be rendered here by JS -->
-      <div class="loading-overlay" id="loading-overlay">
-        <div class="spinner"></div>
-        <p>Carregando colunas do RSS...</p>
+    <!-- Main Content Area with top bar and columns deck workspace -->
+    <div class="main-content">
+      <div class="top-bar">
+        <div class="top-bar-title">
+          <span class="active-tab-title" id="active-tab-title">Global</span>
+        </div>
+        <div class="top-bar-controls">
+          <!-- Search box -->
+          <div class="search-box">
+            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="search-input" placeholder="Buscar no histórico..." autocomplete="off">
+            <button id="clear-search-btn" class="clear-btn" style="display:none;">&times;</button>
+          </div>
+          <!-- Time Travel -->
+          <div class="time-travel-wrapper">
+            <input type="date" id="date-picker" class="custom-date-input">
+            <button id="reset-time-btn" class="secondary-btn reset-time-btn" style="display:none;">
+              Voltar ao Presente
+            </button>
+          </div>
+        </div>
       </div>
-    </main>
+
+      <!-- Main Deck Scrollable Column Workspace -->
+      <main class="deck-workspace" id="deck-workspace">
+        <!-- Dynamic columns will be rendered here by JS -->
+        <div class="loading-overlay" id="loading-overlay">
+          <div class="spinner"></div>
+          <p>Carregando colunas do RSS...</p>
+        </div>
+      </main>
+    </div>
   </div>
 
   <!-- Audio Alert for incoming news (subtle pop) -->
