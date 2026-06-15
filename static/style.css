@@ -716,9 +716,9 @@ body {
   box-shadow: 0 6px 18px rgba(239, 68, 68, 0.2), 0 4px 10px rgba(0,0,0,0.3);
 }
 @keyframes textPulseRed {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.03); opacity: 0.95; }
-  100% { transform: scale(1); }
+  0% { opacity: 0.85; }
+  50% { opacity: 1; }
+  100% { opacity: 0.85; }
 }
 @keyframes cardAlertGlowRed {
   0% { border-color: rgba(239, 68, 68, 0.3) !important; }
@@ -743,9 +743,9 @@ body {
   box-shadow: 0 6px 18px rgba(16, 185, 129, 0.2), 0 4px 10px rgba(0,0,0,0.3);
 }
 @keyframes textPulseGreen {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.03); opacity: 0.95; }
-  100% { transform: scale(1); }
+  0% { opacity: 0.85; }
+  50% { opacity: 1; }
+  100% { opacity: 0.85; }
 }
 @keyframes cardAlertGlowGreen {
   0% { border-color: rgba(16, 185, 129, 0.3) !important; }
@@ -770,9 +770,9 @@ body {
   box-shadow: 0 6px 18px rgba(59, 130, 246, 0.2), 0 4px 10px rgba(0,0,0,0.3);
 }
 @keyframes textPulseBlue {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.03); opacity: 0.95; }
-  100% { transform: scale(1); }
+  0% { opacity: 0.85; }
+  50% { opacity: 1; }
+  100% { opacity: 0.85; }
 }
 @keyframes cardAlertGlowBlue {
   0% { border-color: rgba(59, 130, 246, 0.3) !important; }
@@ -797,9 +797,9 @@ body {
   box-shadow: 0 6px 18px rgba(139, 92, 246, 0.2), 0 4px 10px rgba(0,0,0,0.3);
 }
 @keyframes textPulsePurple {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.03); opacity: 0.95; }
-  100% { transform: scale(1); }
+  0% { opacity: 0.85; }
+  50% { opacity: 1; }
+  100% { opacity: 0.85; }
 }
 @keyframes cardAlertGlowPurple {
   0% { border-color: rgba(139, 92, 246, 0.3) !important; }
@@ -824,9 +824,9 @@ body {
   box-shadow: 0 6px 18px rgba(245, 158, 11, 0.2), 0 4px 10px rgba(0,0,0,0.3);
 }
 @keyframes textPulseOrange {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.03); opacity: 0.95; }
-  100% { transform: scale(1); }
+  0% { opacity: 0.85; }
+  50% { opacity: 1; }
+  100% { opacity: 0.85; }
 }
 @keyframes cardAlertGlowOrange {
   0% { border-color: rgba(245, 158, 11, 0.3) !important; }

@@ -39,7 +39,8 @@ DEFAULT_FEEDS = [
 ]
 
 def get_db_connection():
-    conn = sqlite3.connect(DB_FILE)
+    conn = sqlite3.connect(DB_FILE, timeout=15.0)
+    conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA foreign_keys = ON")
     conn.row_factory = sqlite3.Row
     return conn
@@ -179,9 +180,13 @@ def standardize_pub_date(entry):
     # Fallback to current UTC date time
     return datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
 
-def save_parsed_entries(feed_id, entries, feed_url=""):
+def save_parsed_entries(feed_id, entries, feed_url="", conn=None):
     """Saves non-duplicate entries to the articles table."""
-    conn = get_db_connection()
+    local_conn = False
+    if conn is None:
+        conn = get_db_connection()
+        local_conn = True
+    
     cursor = conn.cursor()
     new_count = 0
     
@@ -233,8 +238,9 @@ def save_parsed_entries(feed_id, entries, feed_url=""):
         except Exception as e:
             print(f"Failed to insert article: {e}")
             
-    conn.commit()
-    conn.close()
+    if local_conn:
+        conn.commit()
+        conn.close()
     return new_count
 
 def fetch_feed_entries(url):
@@ -317,7 +323,7 @@ def fetch_all_feeds():
     cursor = conn.cursor()
     for fid, name, url, entries in results:
         if entries:
-            new_inserted = save_parsed_entries(fid, entries, url)
+            new_inserted = save_parsed_entries(fid, entries, url, conn=conn)
             total_new += new_inserted
             print(f"Inserted {new_inserted} new articles for {name}")
         cursor.execute("UPDATE feeds SET last_fetched = ? WHERE id = ?", (now_str, fid))
@@ -332,6 +338,7 @@ def poll_due_feeds():
     cursor = conn.cursor()
     cursor.execute("SELECT id, name, url, update_interval, last_fetched FROM feeds")
     feeds = [dict(row) for row in cursor.fetchall()]
+    conn.close()
     
     now_str = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
     total_new = 0
@@ -365,10 +372,14 @@ def poll_due_feeds():
             if entries:
                 new_inserted = save_parsed_entries(fid, entries, url)
                 total_new += new_inserted
-            cursor.execute("UPDATE feeds SET last_fetched = ? WHERE id = ?", (now_str, fid))
-            conn.commit()
             
-    conn.close()
+            # Update last_fetched on a fresh connection
+            conn_update = get_db_connection()
+            cursor_update = conn_update.cursor()
+            cursor_update.execute("UPDATE feeds SET last_fetched = ? WHERE id = ?", (now_str, fid))
+            conn_update.commit()
+            conn_update.close()
+            
     return total_new
 
 def query_articles(category=None, date=None, search=None):

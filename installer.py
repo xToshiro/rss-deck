@@ -221,10 +221,23 @@ class RSSDeckInstaller:
             shutil.copy2(os.path.join(source, "dashboard.png"), os.path.join(dest, "dashboard.png"))
             shutil.copy2(os.path.join(source, "requirements.txt"), os.path.join(dest, "requirements.txt"))
             
-            # Copy app icon if it exists
+            # Copy app icon if it exists, otherwise generate it
             icon_src = os.path.join(source, "app_icon.ico")
+            icon_dest = os.path.join(dest, "app_icon.ico")
             if os.path.exists(icon_src):
-                shutil.copy2(icon_src, os.path.join(dest, "app_icon.ico"))
+                shutil.copy2(icon_src, icon_dest)
+            else:
+                try:
+                    from PIL import Image, ImageDraw
+                    image = Image.new('RGB', (64, 64), color=(15, 22, 36))
+                    dc = ImageDraw.Draw(image)
+                    dc.ellipse([8, 8, 56, 56], outline=(59, 130, 246), width=5)
+                    dc.ellipse([20, 20, 44, 44], outline=(245, 158, 11), width=4)
+                    dc.ellipse([28, 28, 36, 36], fill=(16, 185, 129))
+                    image.save(icon_dest, format="ICO", sizes=[(64, 64), (32, 32), (16, 16)])
+                    print("Generated app_icon.ico in installer dest.")
+                except Exception as e:
+                    print(f"Could not generate app_icon.ico in installer: {e}")
 
             # Copy Static folder recursively
             static_dest = os.path.join(dest, "static")
@@ -294,8 +307,31 @@ class RSSDeckInstaller:
         shortcut_path = os.path.join(desktop, "RSS Deck.lnk")
         
         # Get location of pythonw.exe inside current Python environment
-        python_dir = os.path.dirname(sys.executable)
-        pythonw_path = os.path.join(python_dir, "pythonw.exe")
+        python_full_path = None
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        startupinfo.wShowWindow = subprocess.SW_HIDE
+        
+        if getattr(sys, 'frozen', False):
+            # Try running python / py to get absolute path
+            for exe_name in ["python", "py"]:
+                try:
+                    proc = subprocess.run([exe_name, "-c", "import sys; print(sys.executable)"],
+                                          startupinfo=startupinfo, capture_output=True, text=True, timeout=2)
+                    if proc.returncode == 0:
+                        python_full_path = proc.stdout.strip()
+                        break
+                except Exception:
+                    pass
+        else:
+            python_full_path = sys.executable
+
+        if python_full_path:
+            python_dir = os.path.dirname(python_full_path)
+            pythonw_path = os.path.join(python_dir, "pythonw.exe")
+        else:
+            pythonw_path = "pythonw.exe"
+
         if not os.path.exists(pythonw_path):
             pythonw_path = "pythonw.exe"  # Fallback to PATH resolution
 
