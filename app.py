@@ -767,7 +767,7 @@ def api_feed_fetch(feed_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-CURRENT_VERSION = "v1.0.1"
+CURRENT_VERSION = "v1.0.2"
 LATEST_RELEASE_CACHE = {
     "data": None,
     "last_checked": 0
