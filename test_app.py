@@ -492,4 +492,30 @@ def test_articles_global_category(client):
     assert global_articles[0]["guid"] == "b1"
     assert global_articles[1]["guid"] == "a1"
 
+def test_api_feed_fetch(client):
+    """Test the POST /api/feeds/<feed_id>/fetch endpoint."""
+    client.post('/api/categories', json={"name": "Tecnologia"})
+    resp_feed = client.post('/api/feeds', json={"name": "Gizmodo", "url": "https://gizmodo.uol.com.br/feed/", "category": "Tecnologia"})
+    feed_id = resp_feed.get_json()["feed"]["id"]
+    
+    with patch('app.fetch_feed_entries') as mock_fetch:
+        mock_fetch.return_value = [
+            {"title": "Gizmodo Tech news", "link": "http://giz1", "summary": "tech news details", "id": "g-1", "published_parsed": (2026, 6, 15, 10, 30, 0, 0, 166, 0)}
+        ]
+        response = client.post(f'/api/feeds/{feed_id}/fetch')
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["status"] == "success"
+        assert data["new_articles_count"] == 1
+
+def test_api_version_check(client):
+    """Test GET /api/version/check endpoint."""
+    response = client.get('/api/version/check')
+    assert response.status_code == 200
+    data = response.get_json()
+    assert "current_version" in data
+    assert "latest_version" in data
+    assert "update_available" in data
+
+
 

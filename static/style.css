@@ -40,12 +40,15 @@ body {
   height: 100vh;
   width: 100vw;
   -webkit-font-smoothing: antialiased;
+  display: flex;
+  flex-direction: column;
 }
 
 /* App Wrapper */
 .app-container {
   display: flex;
-  height: 100vh;
+  flex-grow: 1;
+  height: 0;
   width: 100vw;
 }
 
@@ -1231,12 +1234,121 @@ body {
   left: 150%;
 }
 
-/* High-tech scanning wave when workspace is refreshing */
-.deck-workspace.workspace-refreshing {
-  position: relative;
+/* Column Tag Badge Dot */
+.column-tags-badges {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
 }
 
-.deck-workspace.workspace-refreshing::before {
+.tag-badge-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: help;
+  transition: var(--transition-smooth);
+}
+.tag-badge-dot.color-red { background-color: #ef4444; box-shadow: 0 0 4px rgba(239, 68, 68, 0.4); }
+.tag-badge-dot.color-green { background-color: #10b981; box-shadow: 0 0 4px rgba(16, 185, 129, 0.4); }
+.tag-badge-dot.color-blue { background-color: #3b82f6; box-shadow: 0 0 4px rgba(59, 130, 246, 0.4); }
+.tag-badge-dot.color-purple { background-color: #8b5cf6; box-shadow: 0 0 4px rgba(139, 92, 246, 0.4); }
+.tag-badge-dot.color-orange { background-color: #f59e0b; box-shadow: 0 0 4px rgba(245, 158, 11, 0.4); }
+
+.tag-badge-dot:hover {
+  transform: scale(1.15);
+}
+
+/* Update Warning Banner */
+.update-banner {
+  width: 100%;
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  color: #ffffff;
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  position: relative;
+  z-index: 2000;
+  animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(0); }
+}
+
+.update-link {
+  background-color: #ffffff;
+  color: #1e3a8a;
+  padding: 0.3rem 0.8rem;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  transition: var(--transition-smooth);
+  margin-left: 1rem;
+}
+.update-link:hover {
+  background-color: #f3f4f6;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+}
+
+.close-banner-btn {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0 5px;
+  margin-left: auto;
+}
+
+/* Column Refresh Button */
+.col-refresh-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 50%;
+  transition: var(--transition-smooth);
+}
+.col-refresh-btn:hover {
+  color: var(--text-primary);
+  background-color: rgba(255, 255, 255, 0.05);
+}
+.col-refresh-btn svg {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+.col-refresh-btn.spinning svg {
+  animation: spin 1s linear infinite;
+  color: var(--color-accent);
+}
+
+/* High-tech scanning wave exclusively when specific column is refreshing */
+.deck-column.column-refreshing {
+  position: relative;
+  animation: columnPulse 1.2s infinite ease-in-out;
+  pointer-events: none;
+}
+
+.deck-column.column-refreshing::before {
   content: '';
   position: absolute;
   top: 0;
@@ -1251,25 +1363,20 @@ body {
     rgba(59, 130, 246, 0.04) 60%,
     rgba(59, 130, 246, 0) 100%
   );
-  background-size: 100% 300px;
+  background-size: 100% 200px;
   background-repeat: no-repeat;
-  animation: scanLine 1.5s infinite linear;
+  animation: scanLine 1.2s infinite linear;
   pointer-events: none;
   z-index: 10;
 }
 
 @keyframes scanLine {
-  0% { background-position: 0 -300px; }
+  0% { background-position: 0 -200px; }
   100% { background-position: 0 100%; }
-}
-
-.deck-column.column-refreshing {
-  animation: columnPulse 1.2s infinite ease-in-out;
-  pointer-events: none;
 }
 
 @keyframes columnPulse {
   0% { opacity: 0.95; filter: brightness(0.95) saturate(0.9); }
-  50% { opacity: 0.7; filter: brightness(0.7) saturate(0.7); transform: scale(0.99); }
+  50% { opacity: 0.75; filter: brightness(0.8) saturate(0.8); }
   100% { opacity: 0.95; filter: brightness(0.95) saturate(0.9); }
 }

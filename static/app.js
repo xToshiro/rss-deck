@@ -48,6 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFeeds();
   await loadTags(); // Load tags from database
   await loadDashboard();
+  await checkForUpdates(); // Check for GitHub release updates on boot
   
   // Real-time polling every 15 seconds
   pollingInterval = setInterval(pollForUpdates, 15000);
@@ -439,9 +440,13 @@ function updateItemCounters() {
 // Manual Refresh Request
 async function triggerManualRefresh() {
   refreshBtn.classList.add('spinning');
-  deckWorkspace.classList.add('workspace-refreshing');
+  
   const cols = deckWorkspace.querySelectorAll('.deck-column');
-  cols.forEach(c => c.classList.add('column-refreshing'));
+  cols.forEach(c => {
+    c.classList.add('column-refreshing');
+    const b = c.querySelector('.col-refresh-btn');
+    if (b) b.classList.add('spinning');
+  });
   
   try {
     const response = await fetch('/api/fetch', { method: 'POST' });
@@ -455,8 +460,11 @@ async function triggerManualRefresh() {
     alert("Falha ao atualizar feeds. Verifique se o backend está ativo.");
   } finally {
     refreshBtn.classList.remove('spinning');
-    deckWorkspace.classList.remove('workspace-refreshing');
-    cols.forEach(c => c.classList.remove('column-refreshing'));
+    cols.forEach(c => {
+      c.classList.remove('column-refreshing');
+      const b = c.querySelector('.col-refresh-btn');
+      if (b) b.classList.remove('spinning');
+    });
   }
 }
 
@@ -522,6 +530,27 @@ function renderDeckColumns() {
     // Filter articles for this feed id
     const feedArticles = articles.filter(art => art.feed_id === feed.id);
     
+    // Calculate average publication interval
+    const avgPubMins = calculateAveragePubInterval(feedArticles);
+    const avgPubStr = formatAverageInterval(avgPubMins);
+    
+    // Count tags reference
+    let badgesHtml = '';
+    if (tagsList && tagsList.length > 0) {
+      let badgeDots = '';
+      tagsList.forEach(tag => {
+        const count = countTagReferences(feedArticles, tag);
+        if (count > 0) {
+          badgeDots += `
+            <span class="tag-badge-dot color-${tag.color || 'red'}" title="Tag '${escapeHtml(tag.word)}': ${count} referências no feed">${count}</span>
+          `;
+        }
+      });
+      if (badgeDots) {
+        badgesHtml = `<div class="column-tags-badges">${badgeDots}</div>`;
+      }
+    }
+    
     const columnElement = document.createElement('section');
     columnElement.className = 'deck-column';
     columnElement.id = `col-${feed.id}`;
@@ -534,9 +563,15 @@ function renderDeckColumns() {
       <div class="deck-column-header">
         <div class="column-title-area">
           <span class="column-title">${feed.name}</span>
-          <span class="column-meta">${feed.category} Feed</span>
+          <span class="column-meta">Média: ${avgPubStr} | Polling: ${feed.update_interval || 10}m</span>
+          ${badgesHtml}
         </div>
         <div class="column-actions">
+          <button class="col-refresh-btn" data-feed-id="${feed.id}" title="Atualizar este feed">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+            </svg>
+          </button>
           <span class="item-counter">${feedArticles.length}</span>
         </div>
       </div>
@@ -546,6 +581,15 @@ function renderDeckColumns() {
     `;
     
     deckWorkspace.appendChild(columnElement);
+    
+    // Wire individual column refresh button
+    const colRefreshBtn = columnElement.querySelector('.col-refresh-btn');
+    if (colRefreshBtn) {
+      colRefreshBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        triggerColumnRefresh(feed.id);
+      });
+    }
     
     const articlesListContainer = document.getElementById(`list-${feed.id}`);
     
@@ -749,10 +793,12 @@ async function handleAddFeed(e) {
   e.preventDefault();
   const nameInput = document.getElementById('new-feed-name');
   const urlInput = document.getElementById('new-feed-url');
+  const intervalInput = document.getElementById('new-feed-interval');
   
   const name = nameInput.value.trim();
   const url = urlInput.value.trim();
   const category = newFeedCategorySelect.value;
+  const update_interval = intervalInput.value ? parseInt(intervalInput.value.trim()) : null;
   
   if (!name || !url || !category) return;
   
@@ -760,13 +806,14 @@ async function handleAddFeed(e) {
     const response = await fetch('/api/feeds', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, url, category })
+      body: JSON.stringify({ name, url, category, update_interval })
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Erro ao adicionar feed");
     
     nameInput.value = '';
     urlInput.value = '';
+    intervalInput.value = '';
     newFeedCategorySelect.value = '';
     
     await loadFeeds();
@@ -828,7 +875,7 @@ function renderFeedManagerList() {
         
         row.innerHTML = `
           <div class="feed-info">
-            <span class="feed-row-name">${escapeHtml(feed.name)}</span>
+            <span class="feed-row-name">${escapeHtml(feed.name)} (${feed.update_interval || 10} min)</span>
             <span class="feed-row-url">${escapeHtml(feed.url)}</span>
           </div>
           <div class="feed-row-actions">
@@ -908,6 +955,10 @@ function toggleEditFeedRow(feed) {
           <!-- Categories filled -->
         </select>
       </div>
+      <div class="form-group">
+        <label>Intervalo de Atualização (minutos)</label>
+        <input type="number" id="edit-interval-${feed.id}" min="1" max="1440" value="${feed.update_interval || 10}" required>
+      </div>
       <div style="display:flex; gap:0.5rem; margin-top:0.25rem;">
         <button type="submit" class="save-row-btn">Salvar</button>
         <button type="button" class="cancel-row-btn" id="edit-cancel-${feed.id}">Cancelar</button>
@@ -935,15 +986,16 @@ function toggleEditFeedRow(feed) {
     e.preventDefault();
     const newName = document.getElementById(`edit-name-${feed.id}`).value.trim();
     const newUrl = document.getElementById(`edit-url-${feed.id}`).value.trim();
+    const newInterval = parseInt(document.getElementById(`edit-interval-${feed.id}`).value.trim());
     const newCat = select.value;
     
-    if (!newName || !newUrl || !newCat) return;
+    if (!newName || !newUrl || !newCat || isNaN(newInterval)) return;
     
     try {
       const response = await fetch(`/api/feeds/${feed.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newName, url: newUrl, category: newCat })
+        body: JSON.stringify({ name: newName, url: newUrl, category: newCat, update_interval: newInterval })
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Erro ao salvar feed");
@@ -1047,3 +1099,119 @@ function getDragAfterElement(container, x) {
     }
   }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
+
+// Check for updates on GitHub release
+async function checkForUpdates() {
+  try {
+    const response = await fetch('/api/version/check');
+    if (!response.ok) return;
+    const data = await response.json();
+    if (data.update_available) {
+      showUpdateBanner(data.latest_version, data.release_url);
+    }
+  } catch (err) {
+    console.warn("Falha ao checar por atualizações:", err);
+  }
+}
+
+// Render dynamic update warning banner at top of UI
+function showUpdateBanner(version, releaseUrl) {
+  if (document.getElementById('update-banner')) return;
+  
+  const banner = document.createElement('div');
+  banner.id = 'update-banner';
+  banner.className = 'update-banner';
+  banner.innerHTML = `
+    <span>🚀 Nova atualização disponível (${version})!</span>
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <a class="update-link" href="${releaseUrl}" target="_blank">Baixar</a>
+      <button class="close-banner-btn" id="close-banner-btn">&times;</button>
+    </div>
+  `;
+  
+  document.body.insertBefore(banner, document.body.firstChild);
+  document.body.classList.add('has-update-banner');
+  
+  document.getElementById('close-banner-btn').addEventListener('click', () => {
+    banner.remove();
+    document.body.classList.remove('has-update-banner');
+  });
+}
+
+// Calculate the average publication interval in minutes
+function calculateAveragePubInterval(feedArticles) {
+  if (!feedArticles || feedArticles.length < 2) return null;
+  
+  const dates = feedArticles
+    .map(art => new Date(art.pub_date + " UTC"))
+    .filter(d => !isNaN(d.getTime()))
+    .sort((a, b) => b - a); // descending order (newest first)
+    
+  if (dates.length < 2) return null;
+  
+  const diffs = [];
+  for (let i = 0; i < dates.length - 1; i++) {
+    const diffMins = (dates[i] - dates[i + 1]) / 60000;
+    if (diffMins > 0) {
+      diffs.push(diffMins);
+    }
+  }
+  
+  if (diffs.length === 0) return null;
+  
+  return diffs.reduce((sum, val) => sum + val, 0) / diffs.length;
+}
+
+// Format interval in human readable string
+function formatAverageInterval(avgMins) {
+  if (avgMins === null || isNaN(avgMins)) return "Sem dados";
+  if (avgMins < 60) {
+    return `${Math.round(avgMins)} min`;
+  } else if (avgMins < 1440) {
+    return `${(avgMins / 60).toFixed(1)}h`;
+  } else {
+    return `${(avgMins / 1440).toFixed(1)}d`;
+  }
+}
+
+// Count references to a specific tag keyword in articles
+function countTagReferences(feedArticles, tag) {
+  if (!tag || !tag.word) return 0;
+  let count = 0;
+  const escapedWord = escapeRegExp(tag.word);
+  const regex = new RegExp(escapedWord, 'i');
+  
+  feedArticles.forEach(art => {
+    const textToSearch = `${art.title} ${art.description || ''}`;
+    if (regex.test(textToSearch)) {
+      count++;
+    }
+  });
+  
+  return count;
+}
+
+// Trigger refresh for single feed column
+async function triggerColumnRefresh(feedId) {
+  const colEl = document.getElementById(`col-${feedId}`);
+  const btn = colEl ? colEl.querySelector('.col-refresh-btn') : null;
+  
+  if (colEl) colEl.classList.add('column-refreshing');
+  if (btn) btn.classList.add('spinning');
+  
+  try {
+    const response = await fetch(`/api/feeds/${feedId}/fetch`, { method: 'POST' });
+    if (!response.ok) throw new Error("Erro no fetch do feed");
+    const result = await response.json();
+    
+    console.log(`Feed ${feedId} fetch completed. Inserted articles: ${result.new_articles_count}`);
+    await loadDashboard();
+  } catch (error) {
+    console.error(`Feed ${feedId} fetch error:`, error);
+    alert("Falha ao atualizar este feed.");
+  } finally {
+    if (colEl) colEl.classList.remove('column-refreshing');
+    if (btn) btn.classList.remove('spinning');
+  }
+}
+

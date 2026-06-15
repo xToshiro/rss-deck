@@ -1,7 +1,7 @@
 # Specification: RSS Deck Application
 
 ## 1. Overview
-RSS Deck is a multi-column dashboard inspired by TweetDeck designed to display real-time RSS news feeds from open sources. It divides feeds into "Brasil" and "Mundo" tabs, caches articles in a local SQLite database for time-travel and search capabilities, and is built on a Python backend with a HTML/CSS/JS frontend.
+RSS Deck is a multi-column dashboard inspired by TweetDeck designed to display real-time RSS news feeds from open sources. It divides feeds into dynamic categories (like "Brasil" and "Mundo") and a virtual "Global" tab, caches articles in a local SQLite database for time-travel and search capabilities, and is built on a Python backend with a HTML/CSS/JS frontend.
 
 ---
 
@@ -16,6 +16,8 @@ Stores the source feeds configured in the system.
 * `url`: TEXT NOT NULL UNIQUE
 * `category`: TEXT NOT NULL (Value of any registered category)
 * `column_index`: INTEGER NOT NULL (Visual order of columns inside the tab)
+* `update_interval`: INTEGER DEFAULT 10 (Update interval in minutes)
+* `last_fetched`: TEXT (ISO 8601 UTC timestamp of last fetch)
 
 ### 2.2 Table: `articles`
 Stores individual news entries.
@@ -57,7 +59,7 @@ Stores highlight keywords for news items.
 ### 4.1 GET `/api/feeds`
 * **Response Status**: `200 OK`
 * **Content Type**: `application/json`
-* **Payload**: Array of feed objects with categories.
+* **Payload**: Array of feed objects with categories and `update_interval`.
 
 ### 4.2 GET `/api/articles`
 * **Query Parameters**:
@@ -80,11 +82,20 @@ Stores highlight keywords for news items.
 * **POST**: Registers a new tag word with a selected color (`red`, `green`, `blue`, `purple`, `orange`).
 * **DELETE `/api/tags/<id>`**: Deletes a tag keyword.
 
+### 4.6 POST `/api/feeds/<feed_id>/fetch`
+* **Action**: Triggers immediate poll of a specific feed.
+* **Response Status**: `200 OK`
+
+### 4.7 GET `/api/version/check`
+* **Action**: Queries the GitHub Releases API for `xToshiro/rss-deck` to check if a newer version is available. Implements a 1-hour cache.
+* **Response Status**: `200 OK`
+
 ---
 
 ## 5. Background Polling Service
 * A background thread starts automatically with the server.
-* Every **1 minute**, the worker polls all feeds, parses entries, and inserts new ones.
+* Every **10 seconds**, the worker loops through all feeds and checks if the elapsed time since `last_fetched` is greater than or equal to `update_interval`.
+* When due, it polls that specific feed, updates its `last_fetched` timestamp, and stores any new articles.
 * Errors in parsing do not crash the worker.
 
 ---
@@ -100,11 +111,16 @@ Stores highlight keywords for news items.
 * **Columns Layout**:
   * Side-by-side vertical columns corresponding to the active category.
   * In "Global" category, all feeds from all categories are displayed side-by-side. Column dragging is disabled in this mode.
+  * **Header Info**: Displays the average publication frequency calculated dynamically from article dates, the configured update interval, and a set of tag badges showing reference counts in that feed.
+  * **Individual Refresh**: A refresh button in each column header triggers a POST request to update only that feed. During the process, a high-tech scanning wave animation (`.column-refreshing`) runs exclusively on that column.
 
 ### 6.2 Feed Cards and Keyword Highlights
 * Displays title, relative date/time, description snippet, and "Read More" link.
 * Words in titles matching registered tags are highlighted in their corresponding group color.
 * If a card has one or more matching tags, its entire border pulses with a neon shadow in that tag's specific color (Glow Red, Glow Green, Glow Blue, Glow Purple, Glow Orange).
+
+### 6.3 Update Notification Banner
+* On startup, the frontend requests `/api/version/check`. If a new version is available, a warning banner is shown at the top of the UI with a download link.
 
 ---
 

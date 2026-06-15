@@ -65,7 +65,9 @@ def init_db():
             name TEXT NOT NULL,
             url TEXT NOT NULL UNIQUE,
             category TEXT NOT NULL,
-            column_index INTEGER NOT NULL
+            column_index INTEGER NOT NULL,
+            update_interval INTEGER DEFAULT 10,
+            last_fetched TEXT
         )
     """)
     
@@ -93,6 +95,20 @@ def init_db():
         )
     """)
     
+    # Check if feeds table has update_interval and last_fetched columns for existing databases
+    cursor.execute("PRAGMA table_info(feeds)")
+    feeds_cols = [row[1] for row in cursor.fetchall()]
+    if "update_interval" not in feeds_cols:
+        try:
+            cursor.execute("ALTER TABLE feeds ADD COLUMN update_interval INTEGER DEFAULT 10")
+        except Exception as e:
+            print(f"Error migrating feeds table (update_interval): {e}")
+    if "last_fetched" not in feeds_cols:
+        try:
+            cursor.execute("ALTER TABLE feeds ADD COLUMN last_fetched TEXT")
+        except Exception as e:
+            print(f"Error migrating feeds table (last_fetched): {e}")
+
     # Check if tags table has color column for existing databases
     cursor.execute("PRAGMA table_info(tags)")
     cols = [row[1] for row in cursor.fetchall()]
@@ -236,14 +252,49 @@ def fetch_feed_entries(url):
         print(f"Error fetching feed URL {url}: {e}")
         return []
 
+def calculate_default_update_interval(feed_id):
+    """Calculates the average publication interval between the latest articles of a feed in minutes."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT pub_date FROM articles WHERE feed_id = ? ORDER BY pub_date DESC LIMIT 10", (feed_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    if len(rows) < 2:
+        return 10  # fallback to 10 minutes
+    
+    dates = []
+    for row in rows:
+        try:
+            dt = datetime.strptime(row['pub_date'], '%Y-%m-%d %H:%M:%S')
+            dates.append(dt)
+        except ValueError:
+            pass
+            
+    if len(dates) < 2:
+        return 10
+        
+    # dates is sorted descending (newest first)
+    diffs = []
+    for i in range(len(dates) - 1):
+        diff = (dates[i] - dates[i+1]).total_seconds() / 60.0
+        if diff > 0:
+            diffs.append(diff)
+            
+    if not diffs:
+        return 10
+        
+    avg_interval = int(sum(diffs) / len(diffs))
+    # Bound between 1 and 1440 minutes (24 hours)
+    return max(1, min(1440, avg_interval))
+
 def fetch_all_feeds():
     """Queries all configured feeds, fetches latest articles, and updates database."""
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT id, name, url FROM feeds")
     feeds = cursor.fetchall()
-    conn.close()
     
+    now_str = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
     total_new = 0
     for feed in feeds:
         feed_id, name, url = feed['id'], feed['name'], feed['url']
@@ -253,6 +304,54 @@ def fetch_all_feeds():
             new_inserted = save_parsed_entries(feed_id, entries, url)
             total_new += new_inserted
             print(f"Inserted {new_inserted} new articles for {name}")
+        cursor.execute("UPDATE feeds SET last_fetched = ? WHERE id = ?", (now_str, feed_id))
+    conn.commit()
+    conn.close()
+    return total_new
+
+def poll_due_feeds():
+    """Queries all configured feeds, checks if their update interval is elapsed, and updates them."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name, url, update_interval, last_fetched FROM feeds")
+    feeds = [dict(row) for row in cursor.fetchall()]
+    
+    now_str = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+    total_new = 0
+    
+    for feed in feeds:
+        fid = feed['id']
+        url = feed['url']
+        name = feed['name']
+        interval = feed['update_interval']
+        if interval is None or interval < 1:
+            interval = 10
+            
+        last_fetched_str = feed['last_fetched']
+        should_fetch = False
+        
+        if not last_fetched_str:
+            should_fetch = True
+        else:
+            try:
+                last_fetched_dt = datetime.strptime(last_fetched_str, '%Y-%m-%d %H:%M:%S')
+                now_dt = datetime.now(timezone.utc).replace(tzinfo=None)
+                elapsed_mins = (now_dt - last_fetched_dt).total_seconds() / 60.0
+                if elapsed_mins >= interval:
+                      should_fetch = True
+            except Exception:
+                should_fetch = True
+                
+        if should_fetch:
+            print(f"Polling due feed: {name} (interval {interval}m)")
+            entries = fetch_feed_entries(url)
+            if entries:
+                new_inserted = save_parsed_entries(fid, entries, url)
+                total_new += new_inserted
+            cursor.execute("UPDATE feeds SET last_fetched = ? WHERE id = ?", (now_str, fid))
+            conn.commit()
+            
+    conn.close()
     return total_new
 
 def query_articles(category=None, date=None, search=None):
@@ -307,11 +406,11 @@ def start_background_polling():
         while True:
             print("Background fetch starting...")
             try:
-                fetch_all_feeds()
+                poll_due_feeds()
             except Exception as e:
                 print(f"Error in background fetch worker: {e}")
-            # Poll every 1 minute (60 seconds) for a highly live, real-time feel
-            time.sleep(60)
+            # Poll every 10 seconds to check if any individual feed is due
+            time.sleep(10)
             
     thread = threading.Thread(target=worker, daemon=True)
     thread.start()
@@ -327,7 +426,7 @@ def api_feeds():
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT id, name, url, category, column_index FROM feeds ORDER BY category, column_index")
+            cursor.execute("SELECT id, name, url, category, column_index, update_interval, last_fetched FROM feeds ORDER BY category, column_index")
             feeds = [dict(row) for row in cursor.fetchall()]
             conn.close()
             return jsonify(feeds)
@@ -339,6 +438,14 @@ def api_feeds():
         name = data.get('name', '').strip()
         url = data.get('url', '').strip()
         category = data.get('category', '').strip()
+        update_interval = data.get('update_interval')
+        if update_interval is not None:
+            try:
+                update_interval = int(update_interval)
+                if update_interval < 1:
+                    update_interval = 10
+            except ValueError:
+                update_interval = None
         
         if not name or not url or not category:
             return jsonify({"error": "Nome, URL e Categoria são obrigatórios"}), 400
@@ -359,10 +466,11 @@ def api_feeds():
             max_idx = cursor.fetchone()[0]
             column_index = max_idx + 1
             
+            interval_to_insert = update_interval if update_interval is not None else 10
             cursor.execute("""
-                INSERT INTO feeds (name, url, category, column_index)
-                VALUES (?, ?, ?, ?)
-            """, (name, url, category, column_index))
+                INSERT INTO feeds (name, url, category, column_index, update_interval)
+                VALUES (?, ?, ?, ?, ?)
+            """, (name, url, category, column_index, interval_to_insert))
             conn.commit()
             feed_id = cursor.lastrowid
             conn.close()
@@ -375,6 +483,16 @@ def api_feeds():
             except Exception as crawl_err:
                 print(f"Error crawling newly added feed: {crawl_err}")
                 
+            # Dynamic calculation of update_interval if not provided by user
+            if update_interval is None:
+                calculated = calculate_default_update_interval(feed_id)
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                cursor.execute("UPDATE feeds SET update_interval = ? WHERE id = ?", (calculated, feed_id))
+                conn.commit()
+                conn.close()
+                interval_to_insert = calculated
+                
             return jsonify({
                 "status": "success", 
                 "feed": {
@@ -382,7 +500,8 @@ def api_feeds():
                     "name": name,
                     "url": url,
                     "category": category,
-                    "column_index": column_index
+                    "column_index": column_index,
+                    "update_interval": interval_to_insert
                 }
             }), 201
         except sqlite3.IntegrityError:
@@ -397,6 +516,16 @@ def api_feed_detail(feed_id):
         name = data.get('name', '').strip()
         url = data.get('url', '').strip()
         category = data.get('category', '').strip()
+        update_interval = data.get('update_interval')
+        if update_interval is not None:
+            try:
+                update_interval = int(update_interval)
+                if update_interval < 1:
+                    update_interval = 10
+            except ValueError:
+                update_interval = 10
+        else:
+            update_interval = 10
         
         if not name or not url or not category:
             return jsonify({"error": "Nome, URL e Categoria são obrigatórios"}), 400
@@ -436,9 +565,9 @@ def api_feed_detail(feed_id):
                 
             cursor.execute("""
                 UPDATE feeds
-                SET name = ?, url = ?, category = ?, column_index = ?
+                SET name = ?, url = ?, category = ?, column_index = ?, update_interval = ?
                 WHERE id = ?
-            """, (name, url, category, column_index, feed_id))
+            """, (name, url, category, column_index, update_interval, feed_id))
             
             conn.commit()
             conn.close()
@@ -583,6 +712,76 @@ def api_fetch():
         return jsonify({"status": "success", "new_articles_count": new_count})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/api/feeds/<int:feed_id>/fetch', methods=['POST'])
+def api_feed_fetch(feed_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, name, url FROM feeds WHERE id = ?", (feed_id,))
+        feed = cursor.fetchone()
+        if not feed:
+            conn.close()
+            return jsonify({"error": "Feed não encontrado"}), 404
+            
+        now_str = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+        entries = fetch_feed_entries(feed['url'])
+        new_count = 0
+        if entries:
+            new_count = save_parsed_entries(feed['id'], entries, feed['url'])
+        
+        # Update last_fetched
+        cursor.execute("UPDATE feeds SET last_fetched = ? WHERE id = ?", (now_str, feed_id))
+        conn.commit()
+        conn.close()
+        
+        return jsonify({"status": "success", "new_articles_count": new_count})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+CURRENT_VERSION = "v1.0.0"
+LATEST_RELEASE_CACHE = {
+    "data": None,
+    "last_checked": 0
+}
+
+@app.route('/api/version/check')
+def api_version_check():
+    import time
+    now = time.time()
+    latest_info = None
+    
+    if LATEST_RELEASE_CACHE["data"] is not None and (now - LATEST_RELEASE_CACHE["last_checked"]) < 3600:
+        latest_info = LATEST_RELEASE_CACHE["data"]
+    else:
+        try:
+            url = "https://api.github.com/repos/xToshiro/rss-deck/releases/latest"
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+            r = requests.get(url, headers=headers, timeout=2)
+            if r.status_code == 200:
+                latest_info = r.json()
+                LATEST_RELEASE_CACHE["data"] = latest_info
+                LATEST_RELEASE_CACHE["last_checked"] = now
+        except Exception as e:
+            print(f"Error checking GitHub latest release: {e}")
+            
+    if latest_info:
+        latest_tag = latest_info.get("tag_name", CURRENT_VERSION)
+        update_available = (latest_tag != CURRENT_VERSION)
+        return jsonify({
+            "current_version": CURRENT_VERSION,
+            "latest_version": latest_tag,
+            "update_available": update_available,
+            "release_url": latest_info.get("html_url", "https://github.com/xToshiro/rss-deck/releases")
+        })
+        
+    return jsonify({
+        "current_version": CURRENT_VERSION,
+        "latest_version": CURRENT_VERSION,
+        "update_available": False
+    })
 
 @app.route('/api/tags', methods=['GET', 'POST'])
 def api_tags():
